@@ -1,0 +1,1 @@
+* Nimbol: SNOBOL4 patterns for Nim
