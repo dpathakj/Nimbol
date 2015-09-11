@@ -1,3 +1,3 @@
 * Nimbol: SNOBOL4 patterns for Nim
-   [[http://github.com/Henry/Nimbol/doc/nimbol.html]]
-   [[http://github.com/Henry/Nimbol/doc/odarrays.html]]
+   [[http://henry.github.com/Nimbol/doc/nimbol.html]]
+   [[http://henry.github.com/Nimbol/doc/odarrays.html]]
