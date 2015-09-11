@@ -13,12 +13,12 @@ patterm matching package based on the pattern language of =SNOBOL4= modeled on
 context free grammars, with context sensitive extensions that provide full
 (type 0) computational capabilities.
 
+* Documentation
+  + [[http://henry.github.com/Nimbol/doc/nimbol.html][Nimbol]]
+  + [[http://henry.github.com/Nimbol/doc/odarrays.html][OdArray]]
+
 * Original Sources
   + [[http://www.snobol4.org/spipat/][SPIPAT]]
   + [[https://www2.adacore.com/gap-static/GNAT_Book/html/rts/g-spipat__ads.htm][g-spipat.ads]]
   + [[https://www2.adacore.com/gap-static/GNAT_Book/html/rts/g-spipat__adb.htm][g-spipat.adb]]
   + [[https://github.com/hardbol/spitbol][SPITBOL]]
-
-* Documentation
-  + [[http://henry.github.com/Nimbol/doc/nimbol.html][Nimbol]]
-  + [[http://henry.github.com/Nimbol/doc/odarrays.html][OdArray]]
