@@ -101,6 +101,7 @@
 ##
 ## Moving the start Point
 ## ----------------------
+##
 ## A pattern is not required to match starting at the first character of the
 ## string, and is not required to match to the end of the string.  The first
 ## attempt does indeed attempt to match starting at the first character of the
@@ -108,9 +109,8 @@
 ## then the starting point of the match is moved one character, and all possible
 ## alternatives are attempted at the new anchor point.
 ##
-## The entire match fails only when every possible starting point has
-## been attempted. As an example, suppose that we had the subject
-## string::
+## The entire match fails only when every possible starting point has been
+## attempted. As an example, suppose that we had the subject string::
 ##
 ## .. code-block:: nim
 ##   "ababcdeijkl"
@@ -141,117 +141,123 @@
 ## ----------------------
 ##
 ## In addition to strings (or single characters), there are many special pattern
-## elements that correspond to special predefined alternations::
+## elements that correspond to special predefined alternations:
+##   ============= =============================================================
+##   Pattern Func     Description
+##   ============= =============================================================
+##   ``Arb``       Matches any string. First it matches the ``nil`` string, and
+##                 then on a subsequent failure, matches one character, and
+##                 then two characters, and so on. It only fails if the
+##                 entire remaining string is matched.
 ##
-##   Arb       Matches any string. First it matches the ``nil`` string, and
-##             then on a subsequent failure, matches one character, and
-##             then two characters, and so on. It only fails if the
-##             entire remaining string is matched.
+##   ``Bal``       Matches a non-empty string that is parentheses balanced with
+##                 respect to ordinary ``()`` characters. Examples of balanced
+##                 strings are ``"abc"``, ``"a((b)c)"``, and ``"a(b)c(d)e"``.
+##                 Bal matches the shortest possible balanced string on the
+##                 first attempt, and if there is a subsequent failure, attempts
+##                 to extend the string.
 ##
-##   Bal       Matches a non-empty string that is parentheses balanced
-##             with respect to ordinary () characters. Examples of
-##             balanced strings are "abc", "a((b)c)", and "a(b)c(d)e".
-##             Bal matches the shortest possible balanced string on the
-##             first attempt, and if there is a subsequent failure,
-##             attempts to extend the string.
+##   ``Abort``     Immediately aborts the entire pattern match, signaling
+##                 failure. This is a specialized pattern element, which is
+##                 useful in conjunction with some of the special pattern
+##                 elements that have side effects.
 ##
-##   Abort     Immediately aborts the entire pattern match, signalling
-##             failure. This is a specialized pattern element, which is
-##             useful in conjunction with some of the special pattern
-##             elements that have side effects.
+##   ``Fail``      The ``nil`` alternation. Matches no possible strings, so it
+##                 always signals failure. This is a specialized pattern
+##                 element, which is useful in conjunction with some of the
+##                 special pattern elements that have side effects.
 ##
-##   Fail      The ``nil`` alternation. Matches no possible strings, so it
-##             always signals failure. This is a specialized pattern
-##             element, which is useful in conjunction with some of the
-##             special pattern elements that have side effects.
+##   ``Fence``     Matches the ``nil`` string at first, and then if a failure
+##                 causes alternatives to be sought, aborts the match (like an
+##                 ``Abort``). Note that using ``Fence`` at the start of a
+##                 pattern has the same effect as matching in anchored mode.
 ##
-##   Fence     Matches the ``nil`` string at first, and then if a failure causes
-##             alternatives to be sought, aborts the match (like an
-##             ``Abort``). Note that using ``Fence`` at the start of a pattern
-##             has the same effect as matching in anchored mode.
+##   ``Rem``       Matches from the current point to the last character in the
+##                 string. This is a specialized pattern element, which is
+##                 useful in conjunction with some of the special pattern
+##                 elements that have side effects.
 ##
-##   Rem       Matches from the current point to the last character in
-##             the string. This is a specialized pattern element, which
-##             is useful in conjunction with some of the special pattern
-##             elements that have side effects.
-##
-##   Succeed   Repeatedly matches the ``nil`` string (it is equivalent to
-##             the alternation ("" or "" or "" ....). This is a special
-##             pattern element, which is useful in conjunction with some
-##             of the special pattern elements that have side effects.
+##   ``Succeed``   Repeatedly matches the ``nil`` string (it is equivalent to
+##                 the alternation ``("" or "" or "" ....)``. This is a special
+##                 pattern element, which is useful in conjunction with some of
+##                 the special pattern elements that have side effects.
+##   ============= =============================================================
 ##
 ## Pattern Construction Functions
 ## ------------------------------
 ##
-## The following functions construct additional pattern elements::
+## The following functions construct additional pattern elements:
+##   ============= =============================================================
+##   Pattern Func     Description
+##   ============= =============================================================
+##   ``Any(s)``    Where ``s`` is a string, matches a single character that is
+##                 any one of the characters in ``s``. Fails if the current
+##                 character is not one of the given set of characters.
 ##
-##   Any(s)    Where ``s`` is a string, matches a single character that is
-##             any one of the characters in ``s``. Fails if the current
-##             character is not one of the given set of characters.
+##   ``Arbno(p)``  Where ``p`` is any pattern, matches any number of instances
+##                 of the pattern, starting with zero occurrences. It is thus
+##                 equivalent to ``("" or (p & ("" or (p & ("" ....)))))``.  The
+##                 pattern ``p`` may contain any number of pattern elements
+##                 including the use of alternation and concatenation.
 ##
-##   Arbno(p)  Where ``p`` is any pattern, matches any number of instances
-##             of the pattern, starting with zero occurrences. It is
-##             thus equivalent to ``("" or (p & ("" or (p & ("" ....)))))``.
-##             The pattern ``p`` may contain any number of pattern elements
-##             including the use of alternation and concatenation.
+##   ``Break(s)``  Where ``s`` is a string, matches a string of zero or more
+##                 characters up to but not including a break character that is
+##                 one of the characters given in the string ``s``.  Can match
+##                 the ``nil`` string, but cannot match the last character in
+##                 the string, since a break character is required to be
+##                 present.
 ##
-##   Break(s)  Where ``s`` is a string, matches a string of zero or more
-##             characters up to but not including a break character
-##             that is one of the characters given in the string ``s``.
-##             Can match the ``nil`` string, but cannot match the last
-##             character in the string, since a break character is
-##             required to be present.
+##   ``BreakX(s)`` Where ``s`` is a string, behaves exactly like ``Break(s)``
+##                 when it first matches, but if a string is successfully
+##                 matched, then a subsequent failure causes an attempt to
+##                 extend the matched string.
 ##
-##   BreakX(s) Where ``s`` is a string, behaves exactly like ``Break(s)`` when
-##             it first matches, but if a string is successfully matched,
-##             then a subsequent failure causes an attempt to extend the
-##             matched string.
+##   ``Fence(p)``  Where ``p`` is a pattern, attempts to match the pattern ``p``
+##                 including trying all possible alternatives of ``p``. If none
+##                 of these alternatives succeeds, then the Fence pattern
+##                 fails. If one alternative succeeds, then the pattern match
+##                 proceeds, but on a subsequent failure, no attempt is made to
+##                 search for alternative matches of ``p``. The pattern ``p``
+##                 may contain any number of pattern elements including the use
+##                 of alternation and concatenation.
 ##
-##   Fence(p)  Where ``p`` is a pattern, attempts to match the pattern ``p``
-##             including trying all possible alternatives of ``p``. If none
-##             of these alternatives succeeds, then the Fence pattern
-##             fails. If one alternative succeeds, then the pattern
-##             match proceeds, but on a subsequent failure, no attempt
-##             is made to search for alternative matches of ``p``. The
-##             pattern ``p`` may contain any number of pattern elements
-##             including the use of alternation and concatenation.
+##   ``Len(n)``    Where ``n`` is a natural number, matches the given number of
+##                 characters. For example, ``Len(10)`` matches any string that
+##                 is exactly ten characters long.
 ##
-##   Len(n)    Where n is a natural number, matches the given number of
-##             characters. For example, ``Len(10)`` matches any string that
-##             is exactly ten characters long.
+##   ``NotAny(s)`` Where ``s`` is a string, matches a single character that is
+##                 not one of the characters of ``s``. Fails if the current
+##                 character is one of the given set of characters.
 ##
-##   NotAny(s) Where ``s`` is a string, matches a single character that is
-##             not one of the characters of ``s``. Fails if the current
-##             character is one of the given set of characters.
+##   ``NSpan(s)``  Where ``s`` is a string, matches a string of zero or more
+##                 characters that is among the characters given in the
+##                 string. Always matches the longest possible such string.
+##                 Always succeeds, since it can match the ``nil`` string.
 ##
-##   NSpan(s)  Where ``s`` is a string, matches a string of zero or more
-##             characters that is among the characters given in the
-##             string. Always matches the longest possible such string.
-##             Always succeeds, since it can match the ``nil`` string.
+##   ``Pos(n)``    Where ``n`` is a natural number, matches the ``nil`` string
+##                 if exactly ``n`` characters have been matched so far, and
+##                 otherwise fails.
 ##
-##   Pos(n)    Where n is a natural number, matches the ``nil`` string
-##             if exactly n characters have been matched so far, and
-##             otherwise fails.
+##   ``Rpos(n)``   Where ``n`` is a natural number, matches the ``nil`` string
+##                 if exactly ``n`` characters remain to be matched, and
+##                 otherwise fails.
 ##
-##   Rpos(n)   Where n is a natural number, matches the ``nil`` string
-##             if exactly n characters remain to be matched, and
-##             otherwise fails.
+##   ``Rtab(n)``   Where ``n`` is a natural number, matches characters from the
+##                 current position until exactly ``n`` characters remain to be
+##                 matched in the string. Fails if fewer than ``n`` unmatched
+##                 characters remain in the string.
 ##
-##   Rtab(n)   Where n is a natural number, matches characters from
-##             the current position until exactly n characters remain
-##             to be matched in the string. Fails if fewer than n
-##             unmatched characters remain in the string.
+##   ``Tab(n)``    Where ``n`` is a natural number, matches characters from the
+##                 current position until exactly ``n`` characters have been
+##                 matched in all. Fails if more than ``n`` characters have
+##                 already been matched.
 ##
-##   Tab(n)    Where n is a natural number, matches characters from
-##             the current position until exactly n characters have
-##             been matched in all. Fails if more than n characters
-##             have already been matched.
-##
-##   Span(s)   Where ``s`` is a string, matches a string of one or more
-##             characters that is among the characters given in the
-##             string. Always matches the longest possible such string.
-##             Fails if the current character is not one of the given
-##             set of characters.
+##   ``Span(s)``   Where ``s`` is a string, matches a string of one or more
+##                 characters that is among the characters given in the
+##                 string. Always matches the longest possible such string.
+##                 Fails if the current character is not one of the given set of
+##                 characters.
+##   ============= =============================================================
 ##
 ## Recursive Pattern Matching
 ## --------------------------
@@ -268,7 +274,7 @@
 ## this fails, then the alternative matches a ``"b"``, followed by an attempt to
 ## match ``p`` again. This second attempt first attempts to match ``"a"``, and
 ## so on. The result is a pattern that will match a string of b's followed by a
-## single 'a'.
+## single ``'a'``.
 ##
 ## This particular example could simply be written as ``NSpan('b') & 'a'``, but
 ## the use of recursive patterns in the general case can construct complex
@@ -319,11 +325,11 @@
 ## Deferred Matching
 ## -----------------
 ##
-## The pattern construction functions (such as Len and Any) all permit the use
-## of pointers to natural or string values, or functions that return natural or
-## string values. These forms cause the actual value to be obtained at pattern
-## matching time. This allows interesting possibilities for constructing dynamic
-## patterns as illustrated in the examples section.
+## The pattern construction functions (such as ``Len`` and ``Any``) all permit
+## the use of pointers to natural or string values, or functions that return
+## natural or string values. These forms cause the actual value to be obtained
+## at pattern matching time. This allows interesting possibilities for
+## constructing dynamic patterns as illustrated in the examples section.
 ##
 ## In addition the ``(+s)`` operator may be used where ``s`` is a pointer to
 ## string or function returning string, with a similar deferred effect.
@@ -359,8 +365,8 @@
 ## this approach, which of course is only needed if the pattern involved has
 ## side effects, is to do the match in two stages. The call to match sets a
 ## pattern result in a variable of the private type MatchResult, and then a
-## subsequent Replace operation uses this MatchResult object to perform the
-## required replacement.
+## subsequent ``Replace`` operation uses this ``MatchResult`` object to perform
+## the required replacement.
 ##
 ## Using this approach, we can now write the above operation properly in a
 ## manner that will work::
@@ -372,8 +378,8 @@
 ##   Replace(m, '[' & c & ']')
 ##
 ## As with other match cases, there is a function and function form of this
-## match call. A call to Replace after a failed match has no effect. Note that
-## subject should not be modified between the calls.
+## match call. A call to ``Replace`` after a failed match has no effect. Note
+## that subject should not be modified between the calls.
 ##
 ## Examples of Pattern Matching
 ## ----------------------------
@@ -394,9 +400,9 @@
 ##    match(Line, Lnum, "")
 ##
 ## which replaces the line number by the ``nil`` string. Note that it is also
-## possible to use a CharacterSet value as an argument to Span and similar
-## functions, and in particular all the useful constants in are available. This
-## means that we could define ``digs`` as::
+## possible to use a ``CharacterSet`` value as an argument to ``Span`` and
+## similar functions, and in particular all the useful constants in are
+## available. This means that we could define ``digs`` as::
 ##
 ## .. code-block:: nim
 ##    let digs = Span(digit)
@@ -452,19 +458,20 @@
 ## a deferred match::
 ##
 ## .. code-block:: nim
-##    Temp  : string
+##    temp  : string
 ##
-##    bNum  = Udigs & Bchar * Temp & UEdig & (+Temp)
+##    bNum  = Udigs & Bchar * temp & UEdig & (+Temp)
 ##
-## Here the first instance of the base character is stored in ``Temp``, and then
+## Here the first instance of the base character is stored in ``temp``, and then
 ## later in the pattern we rematch the value that was assigned.
 ##
 ## For an example of a recursive pattern, let's define a pattern that is like
-## the built in Bal, but the string matched is balanced with respect to square
-## brackets or curly brackets.
+## the built in ``Bal``, but the string matched is balanced with respect to
+## square brackets or curly brackets.
 ##
 ## The language for such strings might be defined in extended BNF as::
 ##
+## .. code-block:: nim
 ##   ELEMENT ::= <any character other than [] or {}>
 ##               | '[' BALANCED_STRING ']'
 ##               | '{' BALANCED_STRING '}'
@@ -488,9 +495,9 @@
 ##
 ##   Balanced_String = Element & Arbno(Element)
 ##
-## Note the important use of + here to refer to a pattern not yet defined. Note
-## also that we use assignments precisely because we cannot refer to as yet
-## undeclared variables in initializations.
+## Note the important use of ``+`` here to refer to a pattern not yet
+## defined. Note also that we use assignments precisely because we cannot refer
+## to as yet undeclared variables in initializations.
 ##
 ## Now that this pattern is constructed, we can use it as though it were a new
 ## primitive pattern element, and for example, the match::
@@ -547,16 +554,16 @@
 ## of sequential programs. In fact they are sequential programs with general
 ## backtracking. In this pattern, we first use a pattern assignment that matches
 ## ``nil`` and assigns it to ``max``, so that it is initialized for the new
-## match. Now BreakX scans to the next digit. Arb would do here, but BreakX will
-## be more efficient.  Once we have found a digit, we scan out the longest
-## string of digits with Span, and assign it to ``cur``. The deferred call to
-## ``gts`` tests if the string we assigned to ``cur`` is the longest so far. If
-## not, then failure is signalled, and we seek alternatives (this means that
-## BreakX will extend and look for the next digit string).  If the call to
-## ``gts`` succeeds then the matched string is assigned as the largest string so
-## far into ``max`` and its location is saved in ``loc``. Finally Fail forces
-## the match to fail and seek alternatives, so that the entire string is
-## searched.
+## match. Now ``BreakX`` scans to the next digit. Arb would do here, but
+## ``BreakX`` will be more efficient.  Once we have found a digit, we scan out
+## the longest string of digits with Span, and assign it to ``cur``. The
+## deferred call to ``gts`` tests if the string we assigned to ``cur`` is the
+## longest so far. If not, then failure is signalled, and we seek alternatives
+## (this means that ``BreakX`` will extend and look for the next digit string).
+## If the call to ``gts`` succeeds then the matched string is assigned as the
+## largest string so far into ``max`` and its location is saved in
+## ``loc``. Finally ``Fail`` forces the match to fail and seek alternatives, so
+## that the entire string is searched.
 ##
 ## If the pattern ``find`` is matched against a string, the variable ``max`` at
 ## the end of the pattern will have the longest string of digits, and ``loc``
@@ -1292,21 +1299,21 @@ type StackEntry = object
 ##    | r |---->
 ##    +---+
 ##
-## The ``a`` element here is a pcAlt node, and the dotted line represents
-## the contents of the alt field. When the pcAlt element is matched,
-## it stacks a pointer to the leading element of ``r`` on the history stack
-## so that on subsequent failure, a match of ``r`` is attempted.
+## The ``a`` element here is a pcAlt node, and the dotted line represents the
+## contents of the alt field. When the pcAlt element is matched, it stacks a
+## pointer to the leading element of ``r`` on the history stack so that on
+## subsequent failure, a match of ``r`` is attempted.
 ##
-## The ``a`` node is the highest numbered element in the pattern. The
-## original index numbers of ``r`` are unchanged, but the index numbers
-## of the ``l`` pattern are adjusted up by the count of elements in ``r``.
+## The ``a`` node is the highest numbered element in the pattern. The original
+## index numbers of ``r`` are unchanged, but the index numbers of the ``l``
+## pattern are adjusted up by the count of elements in ``r``.
 ##
-## Note that the difference between the index of the ``l`` leading element
-## the index of the ``r`` leading element (after building the alt structure)
+## Note that the difference between the index of the ``l`` leading element the
+## index of the ``r`` leading element (after building the alt structure)
 ## indicates the number of nodes in ``l``, and this is true even after the
-## structure is incorporated into some larger structure. For example,
-## if the ``a`` node has index 16, and ``l`` has index 15 and ``r`` has index
-## 5, then we know that ``l`` has 10 (15-5) elements in it.
+## structure is incorporated into some larger structure.  For example, if the
+## ``a`` node has index 16, and ``l`` has index 15 and ``r`` has index 5, then
+## we know that ``l`` has 10 (15-5) elements in it.
 ##
 ## Suppose that we now concatenate this structure to another pattern
 ## with 9 elements in it. We will now have the ``a`` node with an index
@@ -1680,10 +1687,10 @@ type StackEntry = object
 ## Fence builds a single node::
 ##
 ##   +---+
-##   | F |---->
+##   | f |---->
 ##   +---+
 ##
-## The element ``F``, pcFence, matches ``nil``, and stacks a pointer to a
+## The element ``f``, pcFence, matches ``nil``, and stacks a pointer to a
 ## pcAbort element which will abort the match on a subsequent failure.
 ##
 ## Since this is a single element it is numbered 1 (the reason we
@@ -1779,17 +1786,17 @@ type StackEntry = object
 ## ``F`` is a file access value) is::
 ##
 ##   +---+     +---+     +---+
-##   | e |---->| p |---->| W |---->
+##   | e |---->| p |---->| w |---->
 ##   +---+     +---+     +---+
 ##
-## Here ``e`` is the pcREnter node and W is the pcWriteImm node. The
+## Here ``e`` is the pcREnter node and ``w`` is the pcWriteImm node. The
 ## handling is identical to that described above for Assign Immediate,
 ## except that at the point where a successful match occurs, the matched
 ## substring is written to the referenced file.
 ##
-## The node numbering of the constituent pattern ``p`` is not affected.
-## Where ``n`` is the number of nodes in p, the W node is numbered ``n + 1``,
-## and the ``e`` node is ``n + 2``.
+## The node numbering of the constituent pattern ``p`` is not affected.  Where
+## ``n`` is the number of nodes in p, the ``w`` node is numbered ``n + 1``, and
+## the ``e`` node is ``n + 2``.
 ##
 ## Write On Match
 ## --------------
@@ -1798,7 +1805,7 @@ type StackEntry = object
 ## ``F`` is a file access value) is::
 ##
 ##   +---+     +---+     +---+
-##   | e |---->| p |---->| W |---->
+##   | e |---->| p |---->| w |---->
 ##   +---+     +---+     +---+
 ##
 ## Here ``e`` is the pcREnter node and ``W`` is the pcWriteOnM node. The
@@ -1806,9 +1813,9 @@ type StackEntry = object
 ## except that at the point where a successful match has completed,
 ## the matched substring is written to the referenced file.
 ##
-## The node numbering of the constituent pattern ``p`` is not affected.
-## Where ``n`` is the number of nodes in p, the W node is numbered ``n + 1``,
-## and the ``e`` node is ``n + 2``.
+## The node numbering of the constituent pattern ``p`` is not affected.  Where
+## ``n`` is the number of nodes in p, the ``w`` node is numbered ``n + 1``, and
+## the ``e`` node is ``n + 2``.
 
 # Constant Patterns
 # -----------------
@@ -2274,7 +2281,7 @@ proc `*`*(p: Pattern; val: var VString): Pattern =
   ##   +---+     +---+     +---+
   ##
   ## The node numbering of the constituent pattern ``p`` is not affected.  Where
-  ## ``n`` is the number of nodes in ``p``, the ``a`` node is numbered ``N +
+  ## ``n`` is the number of nodes in ``p``, the ``a`` node is numbered ``n +
   ## 1``, and the e node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,    0, EOP)
@@ -2303,11 +2310,11 @@ proc `*`*(p: Pattern; Fil: var File): Pattern =
   ## Write immediate::
   ##
   ##   +---+     +---+     +---+
-  ##   | e |---->| p |---->| W |---->
+  ##   | e |---->| p |---->| w |---->
   ##   +---+     +---+     +---+
   ##
   ## The node numbering of the constituent pattern ``p`` is not affected.  Where
-  ## ``n`` is the number of nodes in ``p``, the ``W`` node is numbered ``N +
+  ## ``n`` is the number of nodes in ``p``, the ``w`` node is numbered ``n +
   ## 1``, and the ``e`` node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,   0, EOP)
@@ -2338,12 +2345,12 @@ proc `**`*(p: Pattern; val: var VString): Pattern =
   ## Assign on match::
   ##
   ##   +---+     +---+     +---+
-  ##   | E |---->| p |---->| a |---->
+  ##   | e |---->| p |---->| a |---->
   ##   +---+     +---+     +---+
   ##
   ## The node numbering of the constituent pattern ``p`` is not affected.  Where
-  ## ``n`` is the number of nodes in ``p``, the ``a`` node is numbered ``N +
-  ## 1``, and the E node is ``n + 2``.
+  ## ``n`` is the number of nodes in ``p``, the ``a`` node is numbered ``n +
+  ## 1``, and the ``e`` node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,    0, EOP)
   let a = newPE(pcAssignOnM, 0, EOP, addr(val))
@@ -2366,11 +2373,11 @@ proc `**`*(p: Pattern; Fil: var File): Pattern =
   ## Write on match::
   ##
   ##   +---+     +---+     +---+
-  ##   | E |---->| p |---->| W |---->
+  ##   | e |---->| p |---->| w |---->
   ##   +---+     +---+     +---+
   ##
   ## The node numbering of the constituent pattern ``p`` is not affected.  Where
-  ## ``n`` is the number of nodes in ``p``, the ``W`` node is numbered ``N +
+  ## ``n`` is the number of nodes in ``p``, the ``w`` node is numbered ``n +
   ## 1``, and the ``e`` node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,   0, EOP)
