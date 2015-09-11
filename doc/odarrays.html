@@ -1204,12 +1204,16 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
 <p>an optimized dynamic array the size of which may be specified and may be adjusted at runtime.</p>
 <p>For small sizes an <tt class="docutils literal"><span class="pre">array[T]</span></tt> is used but if the specified size is larger than the <tt class="docutils literal"><span class="pre">As: static[int]</span></tt> size specified then a <tt class="docutils literal"><span class="pre">seq[T]</span></tt> is allocated with the required size.</p>
 
-
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/odarrays.nim#L15"
+class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="UncheckedArray"><a name="UncheckedArray"></a><pre><span class="Identifier">UncheckedArray</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span> <span class="Other">=</span> <span class="Identifier">array</span><span class="Other">[</span><span class="DecNumber">0</span> <span class="Operator">..</span> <span class="DecNumber">100000000</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span></pre></dt>
 <dd>
 
-
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/odarrays.nim#L25"
+class="link-seesrc" target="_blank">Source</a>
 </dd>
 
 </dl></div>
@@ -1219,41 +1223,55 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
 <dt id="len"><a name="len,OdArray[As,T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">len</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <span class="Identifier">OdArray</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Natural</span></pre></dt>
 <dd>
 returns the length of the <tt class="docutils literal"><span class="pre">OdArray</span></tt> <cite>a</cite>
-
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/odarrays.nim#L27"
+class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="initOdArray"><a name="initOdArray,,Natural,typedesc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">initOdArray</span><span class="Other">[</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">As</span><span class="Other">:</span> <span class="Keyword">static</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">len</span><span class="Other">:</span> <span class="Identifier">Natural</span><span class="Other">;</span> <span class="Identifier">T</span><span class="Other">:</span> <span class="Identifier">typedesc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">OdArray</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span></pre></dt>
 <dd>
 
-
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/odarrays.nim#L37"
+class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="init"><a name="init,OdArray[As,T],Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">init</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">OdArray</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">len</span><span class="Other">:</span> <span class="Identifier">Natural</span><span class="Other">)</span></pre></dt>
 <dd>
 
-
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/odarrays.nim#L43"
+class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="arrayPtr"><a name="arrayPtr,OdArray[As,T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">arrayPtr</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">OdArray</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">UncheckedArray</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
 <dd>
 returns the currently active data in the form of a <tt class="docutils literal"><span class="pre">ptr</span></tt> to an unchecked <tt class="docutils literal"><span class="pre">array</span></tt>
-
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/odarrays.nim#L49"
+class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="setLen"><a name="setLen,OdArray[As,T],Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">setLen</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">OdArray</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">len</span><span class="Other">:</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">UncheckedArray</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
 <dd>
 <p>sets the length of the <tt class="docutils literal"><span class="pre">OdArray</span></tt> <cite>a</cite> to <cite>len</cite> preserving element values.</p>
 <p><strong>Note</strong>: <tt class="docutils literal"><span class="pre">setLen</span></tt> may change the pointer returned by <tt class="docutils literal"><span class="pre">arrayPtr</span></tt> if the length change causes a change between the two storage mechanisms and so returns the new array pointer.</p>
 
-
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/odarrays.nim#L58"
+class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="setLen2"><a name="setLen2,OdArray[As,T],Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">setLen2</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">OdArray</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">len</span><span class="Other">:</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">UncheckedArray</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
 <dd>
 <p>sets the length of the <tt class="docutils literal"><span class="pre">OdArray</span></tt> <cite>a</cite> to <cite>len</cite> preserving element values and for large arrays increasing the size of <tt class="docutils literal"><span class="pre">seq</span></tt> in powers of 2 to reduce the number of repeated allocations.</p>
 <p><strong>Note</strong>: <tt class="docutils literal"><span class="pre">setLen2</span></tt> may change the pointer returned by <tt class="docutils literal"><span class="pre">arrayPtr</span></tt> if the length change causes a change between the two storage mechanisms and so returns the new array pointer.</p>
 
-
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/odarrays.nim#L87"
+class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="$"><a name="$,OdArray[As,T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`$`</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">a</span><span class="Other">:</span> <span class="Identifier">OdArray</span><span class="Other">[</span><span class="Identifier">As</span><span class="Other">,</span> <span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span></pre></dt>
 <dd>
 generic <tt class="docutils literal"><span class="pre">$</span></tt> operator for <tt class="docutils literal"><span class="pre">OdArray</span></tt> which is equivalent to <tt class="docutils literal"><span class="pre">$</span></tt> for <tt class="docutils literal"><span class="pre">seq</span></tt>
-
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/odarrays.nim#L120"
+class="link-seesrc" target="_blank">Source</a>
 </dd>
 
 </dl></div>
@@ -1265,7 +1283,7 @@ generic <tt class="docutils literal"><span class="pre">$</span></tt> operator fo
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-09-11 19:11:51 UTC</small>
+        <small>Made with Nim. Generated: 2015-09-11 21:36:53 UTC</small>
       </div>
     </div>
   </div>
