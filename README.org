@@ -1,6 +1,6 @@
 #                            -*- mode: org; -*-
 #
-#+TITLE: *[[http://henry.github.com/Nimbol/doc/nimbol.html][Nimbol]]: SNOBOL4 pattern matching in [[http://nim-lang.org][Nim]]*
+#+TITLE: *[[http://henry.github.com/Nimbol/doc/nimbol.html][Nimbol]]: SNOBOL4 patterns in [[http://nim-lang.org][Nim]]*
 #+AUTHOR: nil
 #+OPTIONS: author:nil email:nil ^:{}
 #+LaTeX_HEADER: \usepackage[parfill]{parskip}
