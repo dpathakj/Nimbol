@@ -6,13 +6,12 @@
 #+LaTeX_HEADER: \usepackage[parfill]{parskip}
 #+STARTUP: hidestars odd
 
-* [[http://henry.github.com/Nimbol/doc/nimbol.html][Nimbol]]
-  This package provides a complete implementation in
-  [[http://nim-lang.org][Nim]] of the =SPITBOL=-like pattern construction and
-  matching operations based on =Macro-SPITBOL= created by Robert Dewar.
-  =SPITBOL= is a completely general patterm matching package based on the
-  pattern language of =SNOBOL4= modeled on context free grammars, with context
-  sensitive extensions that provide full (type 0) computational capabilities.
+This package provides a complete implementation in [[http://nim-lang.org][Nim]]
+of the =SPITBOL=-like pattern construction and matching operations based on
+=Macro-SPITBOL= created by Robert Dewar.  =SPITBOL= is a completely general
+patterm matching package based on the pattern language of =SNOBOL4= modeled on
+context free grammars, with context sensitive extensions that provide full
+(type 0) computational capabilities.
 
 * Original Sources
   + [[http://www.snobol4.org/spipat/][SPIPAT]]
