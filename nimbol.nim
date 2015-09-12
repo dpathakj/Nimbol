@@ -5004,34 +5004,18 @@ proc xMatch(
   logicError()
 
 
-# Match
-# -----
-
-# Simple match functions. The subject is matched against the pattern.
-# Any immediate or deferred assignments or writes are executed, and
-# the returned value indicates whether or not the match succeeded.
+# Simple match functions
+# ----------------------
 
 proc match*(subject: String; pat: Pattern): bool =
+  ## The subject is matched against the pattern.  Any immediate or deferred
+  ## assignments or writes are executed, and the returned value indicates
+  ## whether or not the match succeeded.
   var start, stop: Natural
   if debugNimbol:
     xMatch(true, subject, pat.p, pat.stk, start, stop)
   else:
     xMatch(false, subject, pat.p, pat.stk, start, stop)
-
-# Replacement functions. The subject is matched against the pattern.
-# Any immediate or deferred assignments or writes are executed, and
-# the returned value indicates whether or not the match succeeded.
-# If the match succeeds, then the matched part of the subject string
-# is replaced by the given Replace string.
-
-proc match*(subject: var String; pat: Pattern; Replace: String): bool =
-  var start, stop: Natural
-  if debugNimbol:
-    result = xMatch(true, subject, pat.p, pat.stk, start, stop)
-  else:
-    result = xMatch(false, subject, pat.p, pat.stk, start, stop)
-  if result:
-    subject[start..stop] = Replace
 
 proc match*(subject: String; pat: PString): bool =
   let l = subject.len
@@ -5047,6 +5031,23 @@ proc match*(subject: String; pat: PString): bool =
         return true
     return false
 
+
+# Match replacement functions
+# ---------------------------
+
+proc match*(subject: var String; pat: Pattern; Replace: String): bool =
+  ## The subject is matched against the pattern.  Any immediate or deferred
+  ## assignments or writes are executed, and the returned value indicates
+  ## whether or not the match succeeded.  If the match succeeds, then the
+  ## matched part of the subject string is replaced by the given Replace string.
+  var start, stop: Natural
+  if debugNimbol:
+    result = xMatch(true, subject, pat.p, pat.stk, start, stop)
+  else:
+    result = xMatch(false, subject, pat.p, pat.stk, start, stop)
+  if result:
+    subject[start..stop] = Replace
+
 proc match*(subject: var String; pat: PString; Replace: String): bool =
   var start, stop: Natural
   if debugNimbol:
@@ -5056,13 +5057,6 @@ proc match*(subject: var String; pat: PString; Replace: String): bool =
   if result:
     subject[start..stop] = Replace
 
-proc match*(subject: String; pat: PString) =
-  var start, stop: Natural
-  if debugNimbol:
-    discard xMatch(true, subject, toPE(pat), 0, start, stop)
-  else:
-    discard xMatch(false, subject, toPE(pat), 0, start, stop)
-
 proc match*(subject: var String; pat: PString; Replace: String) =
   var start, stop: Natural
   if debugNimbol:
@@ -5071,6 +5065,10 @@ proc match*(subject: var String; pat: PString; Replace: String) =
     discard xMatch(false, subject, toPE(pat), 0, start, stop)
   if start != 0:
     subject[start..stop] = Replace
+
+
+# Match functions returning MatchResult
+# -------------------------------------
 
 proc match*(subject: var String; pat: Pattern; res: var MatchResult): bool =
   var start, stop: Natural
@@ -5088,10 +5086,6 @@ proc match*(subject: var String; pat: Pattern; res: var MatchResult): bool =
     res.res = nil
     false
 
-
-# Replace
-# -------
-
 proc Replace*(result: var MatchResult; Replace: String) {.inline.} =
   ## Given a previous call to match which set result, performs a pattern
   ## replacement if the match was successful. Has no effect if the match
@@ -5099,6 +5093,9 @@ proc Replace*(result: var MatchResult; Replace: String) {.inline.} =
   if result.res != nil:
     result.res[][result.start..result.stop] = Replace
 
+
+# Tests
+# -----
 
 when isMainModule:
 
