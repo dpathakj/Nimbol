@@ -644,60 +644,45 @@
 ##     The parameter or parameters are present for certain node types, and the
 ##     type varies with the pattern code.
 
-import strutils, odarrays
+import odarrays
 
 {.push warning[SmallLshouldNotBeUsed]: off.}
 
-type Character = char ## Element type
-type VString = string ## Container of Element type
-
-type CharArray[n: static[int]] = array[0..n-1, Character]
-type CharacterSet = set[Character]
-
-let lowerLetters* = {'a'..'z'}
-let upperLetters* = {'A'..'Z'}
-let letters* = lowerLetters + upperLetters
-let digits* = {'0'..'9'}
-let lettersDigits* = letters + digits
-let space* = {'\9'..'\13', ' '}
-let punctuation* = {'\33'..'\47', '\58'..'\64', '\91'..'\96', '\123'..'\126'}
-let identifierChars* = lettersDigits + {'_'}
-let identifierStartChar* = letters + {'_'}
+type
+  Character = char ## Element type
+  String = string  ## Container of Element type
+  CharArray[n: static[int]] = array[0..n-1, Character]
+  CharacterSet = set[Character]
 
 type
-  PString* = VString ## \
+  PString* = String ## \
     ## This subtype is used in the remainder of the package to indicate a formal
     ## parameter that is converted to its corresponding pattern, i.e. a pattern
     ## that matches the characters of the string.
 
-type
   PChar* = Character ## \
     ## Similarly, this subtype is used in the remainder of the package to
     ## indicate a formal parameter that is converted to its corresponding
     ## pattern, i.e. a pattern that matches this one character.
 
-type
   BoolFunc* = proc(): bool ## General bool function type.
     ## When this type is used as a formal parameter type in this package, it
     ## indicates a deferred predicate pattern. The function will be called when
     ## the pattern element is matched and failure signalled if false is
     ## returned.
 
-type
   NaturalFunc* = proc(): Natural ## General Natural function type.
     ## When this type is used as a formal parameter type in this package, it
     ## indicates a deferred pattern.  The function will be called when the
     ## pattern element is matched to obtain the currently referenced Natural
     ## value.
 
-type
-  VStringFunc* = proc(): VString ## General string function type.
+  StringFunc* = proc(): String ## General string function type.
     ## When this type is used as a formal parameter type in this package, it
     ## indicates a deferred pattern.  The function will be called when the
     ## pattern element is matched to obtain the currently referenced string
     ## value.
 
-type
   PatternCode = enum
     pcArbY,
     pcAssign,
@@ -727,13 +712,13 @@ type
 
     pcAssignImm,
     pcAssignOnM,
-    pcAnyVP,
-    pcBreakVP,
-    pcBreakXVP,
-    pcNotAnyVP,
-    pcNSpanVP,
-    pcSpanVP,
-    pcStringVP,
+    pcAnySP,
+    pcBreakSP,
+    pcBreakXSP,
+    pcNotAnySP,
+    pcNSpanSP,
+    pcSpanSP,
+    pcStringSP,
 
     pcWriteImm,
     pcWriteOnM,
@@ -782,13 +767,13 @@ type
     pcRTabNP,
     pcTabNP,
 
-    pcAnyVF,
-    pcBreakVF,
-    pcBreakXVF,
-    pcNotAnyVF,
-    pcNSpanVF,
-    pcSpanVF,
-    pcStringVF
+    pcAnySF,
+    pcBreakSF,
+    pcBreakXSF,
+    pcNotAnySF,
+    pcNSpanSF,
+    pcSpanSF,
+    pcStringSF
 
   PE = object
     case pCode: PatternCode
@@ -796,10 +781,10 @@ type
     of pcAlt..pcArbnoX: alt: ref PE
     of pcRpat: patPtr: ptr Pattern
     of pcPredFunc: boolFunc: BoolFunc
-    of pcAssignImm..pcStringVP: vp: ptr VString
+    of pcAssignImm..pcStringSP: vp: ptr String
     of pcWriteImm, pcWriteOnM: filePtr: ptr File
     of pcNil: nil
-    of pcString: str: VString
+    of pcString: str: String
     of pcString2: str2: CharArray[2]
     of pcString3: str3: CharArray[3]
     of pcString4: str4: CharArray[4]
@@ -811,7 +796,7 @@ type
     of pcArbnoY..pcTabNat: nat: Natural
     of pcPosNF..pcTabNF: nf: NaturalFunc
     of pcPosNP..pcTabNP: np: ptr Natural
-    of pcAnyVF..pcStringVF: vf: VStringFunc
+    of pcAnySF..pcStringSF: vf: StringFunc
     index: Natural ## Serial index number of pattern element within pattern
     pThen: ref PE ## Successor element, to be matched after this one
 
@@ -900,7 +885,7 @@ const stackSize : Positive = 10 ## \
 
 type MatchResult = object
   ## Type used to record result of pattern match
-  res : ptr VString ## \
+  res : ptr String ## \
     ## Pointer to subject string. Set to ``nil`` if match failed
 
   start : Natural ## \
@@ -960,13 +945,13 @@ const okForSimpleArbno: array[PatternCode, bool] =
 
     pcAssignImm: false,
     pcAssignOnM: false,
-    pcAnyVP: true,
-    pcBreakVP: false,
-    pcBreakXVP: false,
-    pcNotAnyVP: true,
-    pcNSpanVP: false,
-    pcSpanVP: true,
-    pcStringVP: false,
+    pcAnySP: true,
+    pcBreakSP: false,
+    pcBreakXSP: false,
+    pcNotAnySP: true,
+    pcNSpanSP: false,
+    pcSpanSP: true,
+    pcStringSP: false,
 
     pcWriteImm: false,
     pcWriteOnM: false,
@@ -1015,13 +1000,13 @@ const okForSimpleArbno: array[PatternCode, bool] =
     pcRTabNP: false,
     pcTabNP: false,
 
-    pcAnyVF: true,
-    pcBreakVF: false,
-    pcBreakXVF: false,
-    pcNotAnyVF: true,
-    pcNSpanVF: false,
-    pcSpanVF: true,
-    pcStringVF: false
+    pcAnySF: true,
+    pcBreakSF: false,
+    pcBreakXSF: false,
+    pcNotAnySF: true,
+    pcNSpanSF: false,
+    pcSpanSF: true,
+    pcStringSF: false
   ] ## \
   ## This array is used to determine if a pattern used as an
   ## argument for Arbno is eligible for treatment using the simple Arbno
@@ -1876,7 +1861,7 @@ proc newPE(
     pCode: PatternCode;
     index: Natural;
     pThen: ref PE;
-    vp: ptr VString): ref PE =
+    vp: ptr String): ref PE =
   result = newPE(pCode, index, pThen)
   result.vp = vp
 
@@ -1908,7 +1893,7 @@ proc newPE(
     pCode: PatternCode;
     index: Natural;
     pThen: ref PE;
-    vf: VStringFunc): ref PE =
+    vf: StringFunc): ref PE =
   result = newPE(pCode, index, pThen)
   result.vf = vf
 
@@ -1982,7 +1967,7 @@ proc newPE(
     pCode: PatternCode;
     index: Natural;
     pThen: ref PE;
-    np: ptr Natural): ref PE =
+    np: ptr Natural): ref PE {.inline.} =
     result = newPE(pCode, index, pThen)
     result.np = np
 
@@ -1990,7 +1975,7 @@ proc newPEVal(
     pCode: PatternCode;
     index: Natural;
     pThen: ref PE;
-    val: ptr Natural): ref PE =
+    val: ptr Natural): ref PE {.inline.} =
     result = newPE(pCode, index, pThen)
     result.val = val
 
@@ -2056,7 +2041,7 @@ proc pattern*(p: PString): Pattern {.inline.} =
 proc pattern*(c: PChar): Pattern {.inline.} =
   Pattern(stk: 0, p: toPE(c))
 
-proc toSet(s: VString): CharacterSet =
+proc toSet(s: String): CharacterSet =
   for c in s:
     incl(result, c)
 
@@ -2085,11 +2070,11 @@ proc `$`(np: ptr Natural): string =
 proc `$`(pp: ptr Pattern): string =
   return "patPtr(" & $cast[int](pp) & ')'
 
-proc `$`(vf: VStringFunc): string =
-  return "VF(" & "VStringFunc" & ')'
+proc `$`(vf: StringFunc): string =
+  return "SF(" & "StringFunc" & ')'
 
-proc `$`(vp: ptr VString): string =
-  return "VP(" & $cast[int](vp) & ')'
+proc `$`(vp: ptr String): string =
+  return "SP(" & $cast[int](vp) & ')'
 
 proc setSucc(pat: ref PE; succ: ref PE) =
   ## Adjusts all ``EOP`` pointers in ``pat`` to point to ``succ``. No other
@@ -2267,7 +2252,7 @@ proc `&=`*(l: var Pattern; r: Pattern) {.inline.} =
 # Pattern Assignment Functions
 # ----------------------------
 
-proc `*`*(p: Pattern; val: var VString): Pattern =
+proc `*`*(p: Pattern; val: var String): Pattern =
   ## Matches ``p``, and if the match succeeds, assigns the matched substring to
   ## the given string variable ``val``. This assignment happens as soon as the
   ## substring is matched, and if the pattern ``p1`` is matched more than once
@@ -2288,13 +2273,13 @@ proc `*`*(p: Pattern; val: var VString): Pattern =
   let a = newPE(pcAssignImm, 0, EOP, addr(val))
   Pattern(stk: p.stk + 3, p: Bracket(e, pat, a))
 
-proc `*`*(ps: PString; val: var VString): Pattern =
+proc `*`*(ps: PString; val: var String): Pattern =
   let pat = toPE(ps)
   let e = newPE(pcREnter,    0, EOP)
   let a = newPE(pcAssignImm, 0, EOP, addr(val))
   Pattern(stk: 3, p: Bracket(e, pat, a))
 
-proc `*`*(pc: PChar; val: var VString): Pattern =
+proc `*`*(pc: PChar; val: var String): Pattern =
   let pat = toPE(pc)
   let e = newPE(pcREnter,    0, EOP)
   let a = newPE(pcAssignImm, 0, EOP, addr(val))
@@ -2337,7 +2322,7 @@ proc `*`*(pc: PChar; Fil: var File): Pattern =
 # Pattern Assignment Functions
 # ----------------------------
 
-proc `**`*(p: Pattern; val: var VString): Pattern =
+proc `**`*(p: Pattern; val: var String): Pattern =
   ## Like "*" above, except that the assignment happens at most once after the
   ## entire match is completed successfully. If the match fails, then no
   ## assignment takes place.
@@ -2356,13 +2341,13 @@ proc `**`*(p: Pattern; val: var VString): Pattern =
   let a = newPE(pcAssignOnM, 0, EOP, addr(val))
   Pattern(stk: p.stk + 3, p: Bracket(e, pat, a))
 
-proc `**`*(ps: PString; val: var VString): Pattern =
+proc `**`*(ps: PString; val: var String): Pattern =
   let pat = toPE(ps)
   let e = newPE(pcREnter,    0, EOP)
   let a = newPE(pcAssignOnM, 0, EOP, addr(val))
   Pattern(stk: 3, p: Bracket(e, pat, a))
 
-proc `**`*(pc: PChar; val: var VString): Pattern =
+proc `**`*(pc: PChar; val: var String): Pattern =
   let pat = toPE(pc)
   let e = newPE(pcREnter,    0, EOP)
   let a = newPE(pcAssignOnM, 0, EOP, addr(val))
@@ -2400,17 +2385,17 @@ proc `**`*(pc: PChar; Fil: var File): Pattern =
 # Deferred Matching Operations
 # ----------------------------
 
-proc `+`*(str: var VString): Pattern {.inline.} =
+proc `+`*(str: var String): Pattern {.inline.} =
   ## Here ``Str`` must be a string variable. This function constructs a pattern
   ## which at pattern matching time will access the current value of this
   ## variable, and match against these characters.
-  Pattern(stk: 0, p: newPE(pcStringVP, 1, EOP, addr(str)))
+  Pattern(stk: 0, p: newPE(pcStringSP, 1, EOP, addr(str)))
 
-proc `+`*(str: VStringFunc): Pattern {.inline.} =
+proc `+`*(str: StringFunc): Pattern {.inline.} =
   ## Constructs a pattern which at pattern matching time calls the given
   ## function, and then matches against the string or character value
   ## that is returned by the call.
-  Pattern(stk: 0, p: newPE(pcStringVF, 1, EOP, str))
+  Pattern(stk: 0, p: newPE(pcStringSF, 1, EOP, str))
 
 proc `+`*(P: var Pattern): Pattern {.inline.} =
   ## Here ``P`` must be a Pattern variable. This function constructs a pattern
@@ -2464,7 +2449,7 @@ proc `or=`*(l: var Pattern; r: Pattern): Pattern {.inline.} =
 # Any
 # ---
 
-proc Any*(str: VString): Pattern {.inline.} =
+proc Any*(str: String): Pattern {.inline.} =
   ## Constructs a pattern that matches a single character that is one of
   ## the characters in the given argument. The pattern fails if the current
   ## character is not in ``str``.
@@ -2476,11 +2461,11 @@ proc Any*(str: Character): Pattern {.inline.} =
 proc Any*(str: CharacterSet): Pattern {.inline.} =
   Pattern(stk: 0, p: newPE(pcAnyCS, 1, EOP, str))
 
-proc Any*(str: ptr Vstring): Pattern {.inline.} =
-  Pattern(stk: 0, p: newPE(pcAnyVP, 1, EOP, str))
+proc Any*(str: ptr String): Pattern {.inline.} =
+  Pattern(stk: 0, p: newPE(pcAnySP, 1, EOP, str))
 
-proc Any*(str: VStringFunc): Pattern {.inline.} =
-  Pattern(stk: 0, p: newPE(pcAnyVF, 1, EOP, str))
+proc Any*(str: StringFunc): Pattern {.inline.} =
+  Pattern(stk: 0, p: newPE(pcAnySF, 1, EOP, str))
 
 
 # Arb
@@ -2567,7 +2552,7 @@ proc Bal*(): Pattern {.inline.} =
 # Break
 # -----
 
-proc Break*(str: VString): Pattern {.inline.} =
+proc Break*(str: String): Pattern {.inline.} =
   ## Constructs a pattern that matches a (possibly ``nil``) string which
   ## is immediately followed by a character in the given argument. This
   ## character is not part of the matched string. The pattern fails if
@@ -2581,17 +2566,17 @@ proc Break*(str: Character): Pattern {.inline.} =
 proc Break*(str: CharacterSet): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcBreakCS, 1, EOP, str))
 
-proc Break*(str: ptr VString): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcBreakVP, 1, EOP, str))
+proc Break*(str: ptr String): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcBreakSP, 1, EOP, str))
 
-proc Break*(str: VStringFunc): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcBreakVF, 1, EOP, str))
+proc Break*(str: StringFunc): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcBreakSF, 1, EOP, str))
 
 
 # BreakX
 # ------
 
-proc BreakX*(str: VString): Pattern {.inline.} =
+proc BreakX*(str: String): Pattern {.inline.} =
   ## Like Break, but the pattern attempts to extend on a failure to find the
   ## next occurrence of a character in ``Str``, and only fails when the last
   ## such instance causes a failure.
@@ -2603,11 +2588,11 @@ proc BreakX*(str: Character): Pattern {.inline.} =
 proc BreakX*(str: CharacterSet): Pattern {.inline.} =
   BreakXMake(newPE(pcBreakXCS, 3, nil, str))
 
-proc BreakX*(str: ptr VString): Pattern {.inline.} =
-  BreakXMake(newPE(pcBreakXVP, 3, nil, str))
+proc BreakX*(str: ptr String): Pattern {.inline.} =
+  BreakXMake(newPE(pcBreakXSP, 3, nil, str))
 
-proc BreakX*(str: VStringFunc): Pattern {.inline.} =
-  BreakXMake(newPE(pcBreakXVF, 3, nil, str))
+proc BreakX*(str: StringFunc): Pattern {.inline.} =
+  BreakXMake(newPE(pcBreakXSF, 3, nil, str))
 
 
 # Abort
@@ -2680,7 +2665,7 @@ proc Len*(Count: ptr Natural): Pattern {.inline.} =
 # NotAny
 # ------
 
-proc NotAny*(str: VString): Pattern {.inline.} =
+proc NotAny*(str: String): Pattern {.inline.} =
   ## Constructs a pattern that matches a single character that is not one of the
   ## characters in the given argument. The pattern Fails if the current
   ## character is in ``Str``.
@@ -2692,16 +2677,16 @@ proc NotAny*(str: Character): Pattern {.inline.} =
 proc NotAny*(str: CharacterSet): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcNotAnyCS, 1, EOP, str))
 
-proc NotAny*(str: ptr VString): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcNotAnyVP, 1, EOP, str))
+proc NotAny*(str: ptr String): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcNotAnySP, 1, EOP, str))
 
-proc NotAny*(str: VStringFunc): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcNotAnyVF, 1, EOP, str))
+proc NotAny*(str: StringFunc): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcNotAnySF, 1, EOP, str))
 
 # NSpan
 # -----
 
-proc NSpan*(str: VString): Pattern {.inline.} =
+proc NSpan*(str: String): Pattern {.inline.} =
   ## Constructs a pattern that matches the longest possible string consisting
   ## entirely of characters from the given argument. The string may be empty, so
   ## this pattern always succeeds.
@@ -2713,11 +2698,11 @@ proc NSpan*(str: Character): Pattern {.inline.} =
 proc NSpan*(str: CharacterSet): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcNSpanCS, 1, EOP, str))
 
-proc NSpan*(str: ptr VString): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcNSpanVP, 1, EOP, str))
+proc NSpan*(str: ptr String): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcNSpanSP, 1, EOP, str))
 
-proc NSpan*(str: VStringFunc): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcNSpanVF, 1, EOP, str))
+proc NSpan*(str: StringFunc): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcNSpanSF, 1, EOP, str))
 
 # Pos
 # ---
@@ -2736,7 +2721,7 @@ proc Pos*(Count: ptr Natural): Pattern {.inline.} =
 # Replace
 # -------
 
-proc Replace*(result: var MatchResult; Replace: VString) {.inline.} =
+proc Replace*(result: var MatchResult; Replace: String) {.inline.} =
   ## Given a previous call to match which set result, performs a pattern
   ## replacement if the match was successful. Has no effect if the match
   ## failed. This call should immediately follow the match call.
@@ -2798,7 +2783,7 @@ proc Setcur*(val: var Natural): Pattern {.inline.} =
 # Span
 # ----
 
-proc Span*(str: VString): Pattern {.inline.} =
+proc Span*(str: String): Pattern {.inline.} =
   ## Constructs a pattern that matches the longest possible string consisting
   ## entirely of characters from the given argument. The string cannot be empty
   ## , so the pattern fails if the current character is not one of the
@@ -2811,11 +2796,11 @@ proc Span*(str: Character): Pattern {.inline.} =
 proc Span*(str: CharacterSet): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcSpanCS, 1, EOP, str))
 
-proc Span*(str: ptr VString): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcSpanVP, 1, EOP, str))
+proc Span*(str: ptr String): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcSpanSP, 1, EOP, str))
 
-proc Span*(str: VStringFunc): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcSpanVF, 1, EOP, str))
+proc Span*(str: StringFunc): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcSpanSF, 1, EOP, str))
 
 
 # Succeed
@@ -2847,10 +2832,10 @@ proc Tab*(Count: ptr Natural): Pattern {.inline.} =
 # Image
 # -----
 
-proc deleteAmpersand(result: var VString) =
+proc deleteAmpersand(result: var String) =
    let l = result.len
    if l > 2:
-     result.delete(l - 1, l)
+     result.setLen(l-1)
 
 proc imageSeq(
     result: var string;
@@ -2916,10 +2901,10 @@ proc imageOne(
   of pcAnyCS:
     result.add("Any(" & $e.es & ')')
 
-  of pcAnyVF:
+  of pcAnySF:
     result.add("Any(" & $e.vf & ')')
 
-  of pcAnyVP:
+  of pcAnySP:
     result.add("Any(" & $e.vp & ')')
 
   of pcArbX:
@@ -2955,10 +2940,10 @@ proc imageOne(
   of pcBreakCS:
     result.add("Break(" & $e.es & ')')
 
-  of pcBreakVF:
+  of pcBreakSF:
     result.add("Break(" & $(e.vf) & ')')
 
-  of pcBreakVP:
+  of pcBreakSP:
     result.add("Break(" & $(e.vp) & ')')
 
   of pcBreakXCH:
@@ -2969,11 +2954,11 @@ proc imageOne(
     result.add("BreakX(" & $e.es & ')')
     er = er.pThen
 
-  of pcBreakXVF:
+  of pcBreakXSF:
     result.add("BreakX(" & $(e.vf) & ')')
     er = er.pThen
 
-  of pcBreakXVP:
+  of pcBreakXSP:
     result.add("BreakX(" & $(e.vp) & ')')
     er = er.pThen
 
@@ -3006,10 +2991,10 @@ proc imageOne(
   of pcNotAnyCS:
     result.add("NotAny(" & $e.es & ')')
 
-  of pcNotAnyVF:
+  of pcNotAnySF:
     result.add("NotAny(" & $e.vf & ')')
 
-  of pcNotAnyVP:
+  of pcNotAnySP:
     result.add("NotAny(" & $e.vp & ')')
 
   of pcNSpanCH:
@@ -3018,10 +3003,10 @@ proc imageOne(
   of pcNSpanCS:
     result.add("NSpan(" & $e.es & ')')
 
-  of pcNSpanVF:
+  of pcNSpanSF:
     result.add("NSpan(" & $e.vf & ')')
 
-  of pcNSpanVP:
+  of pcNSpanSP:
     result.add("NSpan(" & $e.vp & ')')
 
   of pcNil:
@@ -3075,10 +3060,10 @@ proc imageOne(
   of pcSpanCS:
     result.add("Span(" & $e.es & ')')
 
-  of pcSpanVF:
+  of pcSpanSF:
     result.add("Span(" & $e.vf & ')')
 
-  of pcSpanVP:
+  of pcSpanSP:
     result.add("Span(" & $e.vp & ')')
 
   of pcString:
@@ -3099,10 +3084,10 @@ proc imageOne(
   of pcString6:
     result.add($e.str6)
 
-  of pcStringVF:
+  of pcStringSF:
     result.add("(+" & $e.vf & ')')
 
-  of pcStringVP:
+  of pcStringSP:
     result.add("(+" & $e.vp & ')')
 
   of pcSucceed:
@@ -3207,10 +3192,10 @@ proc `$`*(p: Pattern): string =
   ##
   ##    access Natural     NP(16#...#)
   ##    access Pattern     patPtr(16#...#)
-  ##    access VString     VP(16#...#)
+  ##    access String     SP(16#...#)
   ##
   ##    NaturalFunc        NF(16#...#)
-  ##    VStringFunc        VF(16#...#)
+  ##    StringFunc        SF(16#...#)
   ##
   ## where 16#...# is the hex representation of the integer address that
   ## corresponds to the given access value
@@ -3302,13 +3287,13 @@ proc dump*(pat: Pattern) =
     of
       pcAssignImm,
       pcAssignOnM,
-      pcAnyVP,
-      pcBreakVP,
-      pcBreakXVP,
-      pcNotAnyVP,
-      pcNSpanVP,
-      pcSpanVP,
-      pcStringVP:
+      pcAnySP,
+      pcBreakSP,
+      pcBreakXSP,
+      pcNotAnySP,
+      pcNSpanSP,
+      pcSpanSP,
+      pcStringSP:
       put($e.vp)
 
     of
@@ -3370,13 +3355,13 @@ proc dump*(pat: Pattern) =
       put($e.np)
 
     of
-      pcAnyVF,
-      pcBreakVF,
-      pcBreakXVF,
-      pcNotAnyVF,
-      pcNSpanVF,
-      pcSpanVF,
-      pcStringVF:
+      pcAnySF,
+      pcBreakSF,
+      pcBreakXSF,
+      pcNotAnySF,
+      pcNSpanSF,
+      pcSpanSF,
+      pcStringSF:
       put($e.vf)
 
     else: discard
@@ -3408,7 +3393,7 @@ proc debugMatch(regionLevel: Natural; str: string) =
   putLine(str)
 
 proc subStrEqual[T: static[int]](
-    subject: VString;
+    subject: String;
     cursor: Natural;
     str: CharArray[T]): bool =
   if (subject.len - cursor) < T:
@@ -3417,7 +3402,7 @@ proc subStrEqual[T: static[int]](
     if subject[cursor + i] != c: return false
   return true
 
-proc subStrEqual(subject: VString; cursor: Natural; str: VString): bool =
+proc subStrEqual(subject: String; cursor: Natural; str: String): bool =
   if (subject.len - cursor) < str.len:
     return false
   for i, c in str:
@@ -3430,7 +3415,7 @@ type State = enum MatchFail, MatchSucceed, StateFail, StateSucceed, Match
 
 proc xMatch(
     debug: static[bool];
-    subject: VString;
+    subject: String;
     patP: ref PE;
     patSize: Natural;
     start: var Natural;
@@ -3789,7 +3774,7 @@ proc xMatch(
         state = StateFail
 
     # Any(string function case)
-    of pcAnyVF:
+    of pcAnySF:
       let u = node.vf()
       debugMatch($(node) & "matching Any", u)
       if cursor < len and subject[cursor] in u:
@@ -3799,7 +3784,7 @@ proc xMatch(
         state = StateFail
 
     # Any(string pointer case)
-    of pcAnyVP:
+    of pcAnySP:
       let u = node.vp[]
       debugMatch($(node) & "matching Any", u)
       if cursor < len and subject[cursor] in u:
@@ -3926,7 +3911,7 @@ proc xMatch(
       state = StateFail
 
     # Break(string function case)
-    of pcBreakVF:
+    of pcBreakSF:
       let u = node.vf()
       debugMatch($(node) & "matching Break", u)
       while cursor < len:
@@ -3937,7 +3922,7 @@ proc xMatch(
       state = StateFail
 
     # Break(string pointer case)
-    of pcBreakVP:
+    of pcBreakSP:
       let u = node.vp[]
       debugMatch($(node) & "matching Break", u)
       while cursor < len:
@@ -3968,7 +3953,7 @@ proc xMatch(
       state = StateFail
 
     # BreakX(string function case)
-    of pcBreakXVF:
+    of pcBreakXSF:
       let u = node.vf()
       debugMatch($(node) & "matching BreakX", u)
       while cursor < len:
@@ -3979,7 +3964,7 @@ proc xMatch(
       state = StateFail
 
     # BreakX(string pointer case)
-    of pcBreakXVP:
+    of pcBreakXSP:
       let u = node.vp[]
       debugMatch($(node) & "matching BreakX", u)
       while cursor < len:
@@ -4096,7 +4081,7 @@ proc xMatch(
         state = StateFail
 
     # NotAny(string function case)
-    of pcNotAnyVF:
+    of pcNotAnySF:
       let u = node.vf()
       debugMatch($(node) & "matching NotAny", u)
       if cursor < len and not(subject[cursor] in u):
@@ -4106,7 +4091,7 @@ proc xMatch(
         state = StateFail
 
     # NotAny(string pointer case)
-    of pcNotAnyVP:
+    of pcNotAnySP:
       let u = node.vp[]
       debugMatch($(node) & "matching NotAny", u)
       if cursor < len and not(subject[cursor] in u):
@@ -4130,7 +4115,7 @@ proc xMatch(
       state = StateSucceed
 
     # NSpan(string function case)
-    of pcNSpanVF:
+    of pcNSpanSF:
       let u = node.vf()
       debugMatch($(node) & "matching NSpan", u)
       while cursor < len and subject[cursor] in u:
@@ -4138,7 +4123,7 @@ proc xMatch(
       state = StateSucceed
 
     # NSpan(string pointer case)
-    of pcNSpanVP:
+    of pcNSpanSP:
       let u = node.vp[]
       debugMatch($(node) & "matching NSpan", u)
       while cursor < len and subject[cursor] in u:
@@ -4314,7 +4299,7 @@ proc xMatch(
         state = StateFail
 
     # Span(string function case)
-    of pcSpanVF:
+    of pcSpanSF:
       let u = node.vf()
       debugMatch($(node) & "matching Span", u)
       var p = cursor
@@ -4327,7 +4312,7 @@ proc xMatch(
         state = StateFail
 
     # Span(string pointer case)
-    of pcSpanVP:
+    of pcSpanSP:
       let u = node.vp[]
       debugMatch($(node) & "matching Span", u)
       var p = cursor
@@ -4394,7 +4379,7 @@ proc xMatch(
         state = StateFail
 
     # String(function case)
-    of pcStringVF:
+    of pcStringSF:
       let u = node.vf()
       debugMatch($(node) & "matching " & u)
       if subject.subStrEqual(cursor, u):
@@ -4404,7 +4389,7 @@ proc xMatch(
         state = StateFail
 
     # String(vstring pointer case)
-    of pcStringVP:
+    of pcStringSP:
       let u = node.vp[]
       debugMatch($(node) & "matching " & u)
       if subject.subStrEqual(cursor, u):
@@ -4490,7 +4475,7 @@ proc xMatch(
 # Any immediate or deferred assignments or writes are executed, and
 # the returned value indicates whether or not the match succeeded.
 
-proc match*(subject: VString; pat: Pattern): bool =
+proc match*(subject: String; pat: Pattern): bool =
   var start, stop: Natural
   if debugNimbol:
     xMatch(true, subject, pat.p, pat.stk, start, stop)
@@ -4503,7 +4488,7 @@ proc match*(subject: VString; pat: Pattern): bool =
 # If the match succeeds, then the matched part of the subject string
 # is replaced by the given Replace string.
 
-proc match*(subject: var VString; pat: Pattern; Replace: VString): bool =
+proc match*(subject: var String; pat: Pattern; Replace: String): bool =
   var start, stop: Natural
   if debugNimbol:
     result = xMatch(true, subject, pat.p, pat.stk, start, stop)
@@ -4512,7 +4497,7 @@ proc match*(subject: var VString; pat: Pattern; Replace: VString): bool =
   if result:
     subject[start..stop] = Replace
 
-proc match*(subject: VString; pat: PString): bool =
+proc match*(subject: String; pat: PString): bool =
   let l = subject.len
   let patLen = pat.len
   if anchoredMode:
@@ -4526,7 +4511,7 @@ proc match*(subject: VString; pat: PString): bool =
         return true
     return false
 
-proc match*(subject: var VString; pat: PString; Replace: VString): bool =
+proc match*(subject: var String; pat: PString; Replace: String): bool =
   var start, stop: Natural
   if debugNimbol:
     result = xMatch(true, subject, toPE(pat), 0, start, stop)
@@ -4535,14 +4520,14 @@ proc match*(subject: var VString; pat: PString; Replace: VString): bool =
   if result:
     subject[start..stop] = Replace
 
-proc match*(subject: VString; pat: PString) =
+proc match*(subject: String; pat: PString) =
   var start, stop: Natural
   if debugNimbol:
     discard xMatch(true, subject, toPE(pat), 0, start, stop)
   else:
     discard xMatch(false, subject, toPE(pat), 0, start, stop)
 
-proc match*(subject: var VString; pat: PString; Replace: VString) =
+proc match*(subject: var String; pat: PString; Replace: String) =
   var start, stop: Natural
   if debugNimbol:
     discard xMatch(true, subject, toPE(pat), 0, start, stop)
@@ -4551,7 +4536,7 @@ proc match*(subject: var VString; pat: PString; Replace: VString) =
   if start != 0:
     subject[start..stop] = Replace
 
-proc match*(subject: var VString; pat: Pattern; res: var MatchResult): bool =
+proc match*(subject: var String; pat: Pattern; res: var MatchResult): bool =
   var start, stop: Natural
   var matched: bool
   if debugNimbol:
@@ -4569,6 +4554,14 @@ proc match*(subject: var VString; pat: Pattern; res: var MatchResult): bool =
 
 
 when isMainModule:
+
+  import strutils
+
+  const
+    LowerLetters = {'a'..'z'}
+    UpperLetters = {'A'..'Z'}
+    LettersDigits = Letters + Digits
+    Punctuation = {'\33'..'\47', '\58'..'\64', '\91'..'\96', '\123'..'\126'}
 
   let hello = "Hello"
   let helloPattern = pattern(hello)
@@ -4617,23 +4610,23 @@ when isMainModule:
         helloPattern ** s2  &
         ' '                 &
         worldPattern        &
-        Any(anyStr) ** s1  &
+        Any(anyStr) ** s1   &
         "bc"
 
     let p7 =
         helloPattern        &
         ' '                 &
-        Any(anyStr) ** s3  &
+        Any(anyStr) ** s3   &
         "bc"                &
         worldPattern ** s4
 
-    let p8 = Any(letters) & "ello World!"
+    let p8 = Any(Letters) & "ello World!"
 
     let p9 =
         "Hello"             &
-        Any(space)          &
+        Any(Whitespace)     &
         "World"             &
-        Any(punctuation)
+        Any(Punctuation)
 
     assert match(subject1, p1) == true
     assert match(subject2, p1) == true
@@ -4768,7 +4761,7 @@ when isMainModule:
 
     # test "delayed evaluation" of string value
     var str = ""
-    proc s: VString = str
+    proc s: String = str
     let p4 = "H" & vowel & +s
     str = "ll"  # AFTER p4 creation
     var subject = "Hello"
