@@ -331,15 +331,26 @@
 ## The cursor assignment operation::
 ##
 ## .. code-block:: nim
+##   var n: Natural = ...
 ##   Setcur(addr(n))
 ##
 ## assigns the current cursor position to the natural variable ``n``. The cursor
 ## position is defined as the count of characters that have been matched so far
 ## (including any start point moves).
 ##
+## A reference variable may also be used to assigns the current cursor
+## position, e.g.::
+##
+## .. code-block:: nim
+##   var n: ref Natural
+##   new(n)
+##   n[] = ...
+##   Setcur(n)
+##
 ## Finally the operations ``*`` and ``**`` may be used with values of type ``ptr
-## File``. The effect is to do a putLine operation of the matched
-## substring. These are particularly useful in debugging pattern matches.
+## File`` or ``ref File``. The effect is to do a putLine operation of the
+## matched substring. These are particularly useful in debugging pattern
+## matches.
 ##
 ## Deferred Matching
 ## -----------------
@@ -923,7 +934,7 @@ proc debugPutLine(str: string) {.inline.} =
 ## Note that pattern assignment functions in the pattern may generate
 ## side effects, so these functions are not necessarily pure.
 
-var anchoredMode : bool = false ## \
+var anchoredMode* : bool = false ## \
   ## This global variable can be set true to cause all subsequent pattern
   ## matches to operate in anchored mode. In anchored mode, no attempt is
   ## made to move the anchor point, so that if the match succeeds it must
@@ -931,7 +942,7 @@ var anchoredMode : bool = false ## \
   ## anchored mode may be achieved in individual pattern matches by using
   ## Fence or Pos(0) at the start of the pattern.
 
-const stackSize : Positive = 10 ## \
+const stackSize : Positive = 20 ## \
   ## Size used for internal pattern matching stack.
 
 type MatchResult = object
@@ -4083,11 +4094,10 @@ proc xMatch(
 
   of Match:
     ## Come here to match the next pattern element
-    ##
     ##   cursor        current position in subject string
     ##   node          pointer to node to be matched
-    ##   stackBase    current stack base
-    ##   stackPtr     current stack pointer
+    ##   stackBase     current stack base
+    ##   stackPtr      current stack pointer
     ##
     ## Main Pattern Match Element Matching Routines
     ## --------------------------------------------
@@ -4096,8 +4106,8 @@ proc xMatch(
     ## processing for each element does one of five things:
     ##
     ##   goto Succeed        to move to the successor
-    ##   goto MatchSucceed  if the entire match succeeds
-    ##   goto MatchFail     if the entire match fails
+    ##   goto MatchSucceed   if the entire match succeeds
+    ##   goto MatchFail      if the entire match fails
     ##   goto Fail           to signal failure of current match
     ##
     ## Processing is NOT allowed to fall through
@@ -5560,9 +5570,11 @@ when isMainModule:
     let subject3 = "arkansas"
 
     let p1 = Tab(1) & Len(1) & "a"
+    let p2 = Tab(6) & "a"
 
     assert match(subject1, p1) == false
     assert match(subject2, p1) == true
     assert match(subject3, p1) == false
+    assert match(subject1, p2) == true
 
   echo("Nimbol passed!")
