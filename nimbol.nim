@@ -267,9 +267,9 @@
 ##                 characters remain in the string.
 ##
 ##   ``Tab(n)``    Where ``n`` is a natural number, matches characters from the
-##                 current position until exactly ``n`` characters have been
-##                 matched in all. Fails if more than ``n`` characters have
-##                 already been matched.
+##                 start of the subject string until exactly ``n`` characters
+##                 have been matched in all. Fails if more than ``n`` characters
+##                 have already been matched.
 ##
 ##   ``Span(s)``   Where ``s`` is a string, matches a string of one or more
 ##                 characters that is among the characters given in the
