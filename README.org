@@ -16,9 +16,12 @@ context free grammars, with context sensitive extensions that provide full
 * Documentation
   + [[http://henry.github.com/Nimbol/doc/nimbol.html][Nimbol]]
   + [[http://henry.github.com/Nimbol/doc/odarrays.html][OdArray]]
-
+  + [[http://www.snobol4.com/spitbol360/spitbol_360_manual.pdf][SPITBOL Manual]]
+  + Macro SPITBOL manual: ftp://ftp.snobol4.com/spitman.pdf
+  + [[http://www.math.bas.bg/bantchev/place/snobol/gpp-2ed.pdf][The SNOBOL4
+    Programming Language Book]]
+  + [[http://www.snobol4.org/][SNOBOL4 and SPITBOL Resources]]
 * Original Sources
-  + [[http://www.snobol4.org/spipat/][SPIPAT]]
+  + [[https://github.com/hardbol/spitbol][SPITBOL]]
   + [[https://www2.adacore.com/gap-static/GNAT_Book/html/rts/g-spipat__ads.htm][g-spipat.ads]]
   + [[https://www2.adacore.com/gap-static/GNAT_Book/html/rts/g-spipat__adb.htm][g-spipat.adb]]
-  + [[https://github.com/hardbol/spitbol][SPITBOL]]
