@@ -761,6 +761,12 @@ type
     pcRTabNF,
     pcTabNF,
 
+    pcPosNR,
+    pcLenNR,
+    pcRPosNR,
+    pcRTabNR,
+    pcTabNR,
+
     pcPosNP,
     pcLenNP,
     pcRPosNP,
@@ -795,6 +801,7 @@ type
     of pcAnyCS..pcSpanCS: es: CharacterSet
     of pcArbnoY..pcTabNat: nat: Natural
     of pcPosNF..pcTabNF: nf: NaturalFunc
+    of pcPosNR..pcTabNR: nr: ref Natural
     of pcPosNP..pcTabNP: np: ptr Natural
     of pcAnySF..pcStringSF: vf: StringFunc
     index: Natural ## Serial index number of pattern element within pattern
@@ -993,6 +1000,12 @@ const okForSimpleArbno: array[PatternCode, bool] =
     pcRPosNF: false,
     pcRTabNF: false,
     pcTabNF: false,
+
+    pcPosNR: false,
+    pcLenNR: false,
+    pcRPosNR: false,
+    pcRTabNR: false,
+    pcTabNR: false,
 
     pcPosNP: false,
     pcLenNP: false,
@@ -1967,6 +1980,14 @@ proc newPE(
     pCode: PatternCode;
     index: Natural;
     pThen: ref PE;
+    nr: ref Natural): ref PE {.inline.} =
+    result = newPE(pCode, index, pThen)
+    result.nr = nr
+
+proc newPE(
+    pCode: PatternCode;
+    index: Natural;
+    pThen: ref PE;
     np: ptr Natural): ref PE {.inline.} =
     result = newPE(pCode, index, pThen)
     result.np = np
@@ -2063,6 +2084,9 @@ proc `$`(fp: ptr File): string =
 
 proc `$`(nf: NaturalFunc): string =
   return "NF(" & "NaturalFunc" & ')'
+
+proc `$`(nr: ref Natural): string =
+  return "NR(" & $cast[int](nr) & ')'
 
 proc `$`(np: ptr Natural): string =
   return "NP(" & $cast[int](np) & ')'
@@ -2658,6 +2682,9 @@ proc Len*(Count: Natural): Pattern {.inline.} =
 proc Len*(Count: NaturalFunc): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcLenNF, 1, EOP, Count))
 
+proc Len*(Count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcLenNR, 1, EOP, Count))
+
 proc Len*(Count: ptr Natural): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcLenNP, 1, EOP, Count))
 
@@ -2715,6 +2742,9 @@ proc Pos*(Count: Natural): Pattern {.inline.} =
 proc Pos*(Count: NaturalFunc): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcPosNF, 1, EOP, Count))
 
+proc Pos*(Count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcPosNR, 1, EOP, Count))
+
 proc Pos*(Count: ptr Natural): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcPosNP, 1, EOP, Count))
 
@@ -2750,6 +2780,9 @@ proc Rpos*(Count: Natural): Pattern {.inline.} =
 proc Rpos*(Count: NaturalFunc): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcRPosNF, 1, EOP, Count))
 
+proc Rpos*(Count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcRPosNR, 1, EOP, Count))
+
 proc Rpos*(Count: ptr Natural): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcRPosNP, 1, EOP, Count))
 
@@ -2765,6 +2798,9 @@ proc Rtab*(Count: Natural): Pattern {.inline.} =
 
 proc Rtab*(Count: NaturalFunc): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcRTabNF, 1, EOP, Count))
+
+proc Rtab*(Count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcRTabNR, 1, EOP, Count))
 
 proc Rtab*(Count: ptr Natural): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcRTabNP, 1, EOP, Count))
@@ -2824,6 +2860,9 @@ proc Tab*(Count: Natural): Pattern {.inline.} =
 
 proc Tab*(Count: NaturalFunc): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcTabNF, 1, EOP, Count))
+
+proc Tab*(Count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcTabNR, 1, EOP, Count))
 
 proc Tab*(Count: ptr Natural): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcTabNP, 1, EOP, Count))
@@ -2982,6 +3021,9 @@ proc imageOne(
   of pcLenNF:
     result.add("Len(" & $e.nf & ')')
 
+  of pcLenNR:
+    result.add("Len(" & $e.nr & ')')
+
   of pcLenNP:
     result.add("Len(" & $e.np & ')')
 
@@ -3018,6 +3060,9 @@ proc imageOne(
   of pcPosNF:
     result.add("Pos(" & $e.nf & ')')
 
+  of pcPosNR:
+    result.add("Pos(" & $e.nr & ')')
+
   of pcPosNP:
     result.add("Pos(" & $e.np & ')')
 
@@ -3039,6 +3084,9 @@ proc imageOne(
   of pcRPosNF:
     result.add("RPos(" & $e.nf & ')')
 
+  of pcRPosNR:
+    result.add("RPos(" & $e.nr & ')')
+
   of pcRPosNP:
     result.add("RPos(" & $e.np & ')')
 
@@ -3047,6 +3095,9 @@ proc imageOne(
 
   of pcRTabNF:
     result.add("RTab(" & $e.nf & ')')
+
+  of pcRTabNR:
+    result.add("RTab(" & $e.nr & ')')
 
   of pcRTabNP:
     result.add("RTab(" & $e.np & ')')
@@ -3098,6 +3149,9 @@ proc imageOne(
 
   of pcTabNF:
     result.add("Tab(" & $e.nf & ')')
+
+  of pcTabNR:
+    result.add("Tab(" & $e.nr & ')')
 
   of pcTabNP:
     result.add("Tab(" & $e.np & ')')
@@ -3345,6 +3399,14 @@ proc dump*(pat: Pattern) =
       pcRTabNF,
       pcTabNF:
       put($e.nf)
+
+    of
+      pcPosNR,
+      pcLenNR,
+      pcRPosNR,
+      pcRTabNR,
+      pcTabNR:
+      put($e.nr)
 
     of
       pcPosNP,
@@ -4053,6 +4115,15 @@ proc xMatch(
         cursor = cursor + n
         state = StateSucceed
 
+    # Len(integer reference case)
+    of pcLenNR:
+      debugMatch($(node) & "matching Len", node.nr[])
+      if cursor + node.nr[] > len:
+        state = StateFail
+      else:
+        cursor = cursor + node.nr[]
+        state = StateSucceed
+
     # Len(integer pointer case)
     of pcLenNP:
       debugMatch($(node) & "matching Len", node.np[])
@@ -4151,6 +4222,14 @@ proc xMatch(
       else:
         state = StateFail
 
+    # Pos(integer reference case)
+    of pcPosNR:
+      debugMatch($(node) & "matching Pos", node.nr[])
+      if cursor == node.nr[]:
+        state = StateSucceed
+      else:
+        state = StateFail
+
     # Pos(integer pointer case)
     of pcPosNP:
       debugMatch($(node) & "matching Pos", node.np[])
@@ -4232,6 +4311,14 @@ proc xMatch(
       else:
         state = StateFail
 
+    # RPos(integer reference case)
+    of pcRPosNR:
+      debugMatch($(node) & "matching RPos", node.nr[])
+      if cursor == (len - node.nr[]):
+        state = StateSucceed
+      else:
+        state = StateFail
+
     # RPos(integer pointer case)
     of pcRPosNP:
       debugMatch($(node) & "matching RPos", node.np[])
@@ -4255,6 +4342,15 @@ proc xMatch(
       debugMatch($(node) & "matching RPos", n)
       if len - cursor >= n:
         cursor = len - n
+        state = StateSucceed
+      else:
+        state = StateFail
+
+    # RTab(integer pointer case)
+    of pcRTabNR:
+      debugMatch($(node) & "matching RPos", node.nr[])
+      if cursor <= len - node.nr[]:
+        cursor = len - node.nr[]
         state = StateSucceed
       else:
         state = StateFail
@@ -4419,6 +4515,15 @@ proc xMatch(
       debugMatch($(node) & "matching Tab ", n)
       if cursor <= n:
         cursor = n
+        state = StateSucceed
+      else:
+        state = StateFail
+
+    # Tab(integer pointer case)
+    of pcTabNR:
+      debugMatch($(node) & "matching Tab ", node.nr[])
+      if cursor <= node.nr[]:
+        cursor = node.nr[]
         state = StateSucceed
       else:
         state = StateFail
@@ -4777,7 +4882,7 @@ when isMainModule:
     let subject4 = "())("
     let subject5 = "((())"
 
-    let p1 = Pos(0U) & Bal() & Rpos(0U)
+    let p1 = Pos(0) & Bal() & Rpos(0)
 
     assert match(subject1, p1) == true
     assert match(subject2, p1) == true
@@ -4938,7 +5043,7 @@ when isMainModule:
     let subject3 = "arkansas"
 
     let p1 = "a" & Pos(4) & Len(1) & "a"
-    let p2 = Pos(0U) & "a" & Len(1) & "a"
+    let p2 = Pos(0) & "a" & Len(1) & "a"
 
     assert match(subject1, p1) == false
     assert match(subject2, p1) == false
