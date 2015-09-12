@@ -2372,6 +2372,18 @@ proc `*`*(p: Pattern; val: ref String): Pattern =
   let a = newPE(pcAssignImm, 0, EOP, val)
   Pattern(stk: p.stk + 3, p: Bracket(e, pat, a))
 
+proc `*`*(ps: PString; val: ref String): Pattern =
+  let pat = toPE(ps)
+  let e = newPE(pcREnter,    0, EOP)
+  let a = newPE(pcAssignImm, 0, EOP, val)
+  Pattern(stk: 3, p: Bracket(e, pat, a))
+
+proc `*`*(pc: PChar; val: ref String): Pattern =
+  let pat = toPE(pc)
+  let e = newPE(pcREnter,    0, EOP)
+  let a = newPE(pcAssignImm, 0, EOP, val)
+  Pattern(stk: 3, p: Bracket(e, pat, a))
+
 proc `*`*(p: Pattern; val: var String): Pattern =
   let pat = copy(p.p)
   let e = newPE(pcREnter,    0, EOP)
@@ -2390,7 +2402,7 @@ proc `*`*(pc: PChar; val: var String): Pattern =
   let a = newPE(pcAssignImmP, 0, EOP, addr(val))
   Pattern(stk: 3, p: Bracket(e, pat, a))
 
-proc `*`*(p: Pattern; Fil: ref File): Pattern =
+proc `*`*(p: Pattern; file: ref File): Pattern =
   ## These are similar to the corresponding pattern assignment operations except
   ## that instead of setting the value of a variable, the matched substring is
   ## written to the appropriate file. This can be useful in following the
@@ -2408,25 +2420,37 @@ proc `*`*(p: Pattern; Fil: ref File): Pattern =
   ## 1``, and the ``e`` node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteImmP, 0, EOP, Fil)
+  let w = newPE(pcWriteImmP, 0, EOP, file)
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
-proc `*`*(p: Pattern; Fil: var File): Pattern =
-  let pat = copy(p.p)
-  let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteImmP, 0, EOP, addr(Fil))
-  Pattern(stk: 3, p: Bracket(e, pat, w))
-
-proc `*`*(ps: PString; Fil: var File): Pattern =
+proc `*`*(ps: PString; file: ref File): Pattern =
   let pat = toPE(ps)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteImmP, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteImmP, 0, EOP, file)
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
-proc `*`*(pc: PChar; Fil: var File): Pattern =
+proc `*`*(pc: PChar; file: ref File): Pattern =
   let pat = toPE(pc)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteImmP, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteImmP, 0, EOP, file)
+  Pattern(stk: 3, p: Bracket(e, pat, w))
+
+proc `*`*(p: Pattern; file: var File): Pattern =
+  let pat = copy(p.p)
+  let e = newPE(pcREnter,   0, EOP)
+  let w = newPE(pcWriteImmP, 0, EOP, addr(file))
+  Pattern(stk: 3, p: Bracket(e, pat, w))
+
+proc `*`*(ps: PString; file: var File): Pattern =
+  let pat = toPE(ps)
+  let e = newPE(pcREnter,   0, EOP)
+  let w = newPE(pcWriteImmP, 0, EOP, addr(file))
+  Pattern(stk: 3, p: Bracket(e, pat, w))
+
+proc `*`*(pc: PChar; file: var File): Pattern =
+  let pat = toPE(pc)
+  let e = newPE(pcREnter,   0, EOP)
+  let w = newPE(pcWriteImmP, 0, EOP, addr(file))
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
 
@@ -2452,6 +2476,18 @@ proc `**`*(p: Pattern; val: ref String): Pattern =
   let a = newPE(pcAssignOnM, 0, EOP, val)
   Pattern(stk: p.stk + 3, p: Bracket(e, pat, a))
 
+proc `**`*(ps: PString; val: ref String): Pattern =
+  let pat = toPE(ps)
+  let e = newPE(pcREnter,    0, EOP)
+  let a = newPE(pcAssignOnM, 0, EOP, val)
+  Pattern(stk: 3, p: Bracket(e, pat, a))
+
+proc `**`*(pc: PChar; val: ref String): Pattern =
+  let pat = toPE(pc)
+  let e = newPE(pcREnter,    0, EOP)
+  let a = newPE(pcAssignOnM, 0, EOP, val)
+  Pattern(stk: 3, p: Bracket(e, pat, a))
+
 proc `**`*(p: Pattern; val: var String): Pattern =
   let pat = copy(p.p)
   let e = newPE(pcREnter,    0, EOP)
@@ -2471,13 +2507,7 @@ proc `**`*(pc: PChar; val: var String): Pattern =
   Pattern(stk: 3, p: Bracket(e, pat, a))
 
 
-proc `**`*(p: Pattern; Fil: ref File): Pattern =
-  let pat = copy(p.p)
-  let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteOnM, 0, EOP, Fil)
-  Pattern(stk: p.stk + 3, p: Bracket(e, pat, w))
-
-proc `**`*(p: Pattern; Fil: var File): Pattern =
+proc `**`*(p: Pattern; file: ref File): Pattern =
   ## Write on match::
   ##
   ##   +---+     +---+     +---+
@@ -2489,19 +2519,37 @@ proc `**`*(p: Pattern; Fil: var File): Pattern =
   ## 1``, and the ``e`` node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteOnMP, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteOnM, 0, EOP, file)
   Pattern(stk: p.stk + 3, p: Bracket(e, pat, w))
 
-proc `**`*(ps: PString; Fil: var File): Pattern =
+proc `**`*(ps: PString; file: ref File): Pattern =
   let pat = toPE(ps)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteOnMP, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteOnM, 0, EOP, file)
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
-proc `**`*(pc: PChar; Fil: var File): Pattern =
+proc `**`*(pc: PChar; file: ref File): Pattern =
   let pat = toPE(pc)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteOnMP, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteOnM, 0, EOP, file)
+  Pattern(stk: 3, p: Bracket(e, pat, w))
+
+proc `**`*(p: Pattern; file: var File): Pattern =
+  let pat = copy(p.p)
+  let e = newPE(pcREnter,   0, EOP)
+  let w = newPE(pcWriteOnMP, 0, EOP, addr(file))
+  Pattern(stk: p.stk + 3, p: Bracket(e, pat, w))
+
+proc `**`*(ps: PString; file: var File): Pattern =
+  let pat = toPE(ps)
+  let e = newPE(pcREnter,   0, EOP)
+  let w = newPE(pcWriteOnMP, 0, EOP, addr(file))
+  Pattern(stk: 3, p: Bracket(e, pat, w))
+
+proc `**`*(pc: PChar; file: var File): Pattern =
+  let pat = toPE(pc)
+  let e = newPE(pcREnter,   0, EOP)
+  let w = newPE(pcWriteOnMP, 0, EOP, addr(file))
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
 
