@@ -5570,7 +5570,7 @@ when isMainModule:
     let subject3 = "arkansas"
 
     let p1 = Tab(1) & Len(1) & "a"
-    let p2 = Tab(6) & "a"
+    let p2 = "i" & Tab(6) & "a"
 
     assert match(subject1, p1) == false
     assert match(subject2, p1) == true
