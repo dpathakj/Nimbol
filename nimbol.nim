@@ -36,6 +36,17 @@
 ## `g-spipat.adb
 ## <https://www2.adacore.com/gap-static/GNAT_Book/html/rts/g-spipat__adb.htm>`_
 ##
+## Documentation
+## =============
+## * `SPITBOL Manual
+##   <http://www.snobol4.com/spitbol360/spitbol_360_manual.pdf>`_
+## * `Macro SPITBOL manual
+##   <ftp://ftp.snobol4.com/spitman.pdf>`_
+## * `The SNOBOL4 Programming Language Book
+##   <http://www.math.bas.bg/bantchev/place/snobol/gpp-2ed.pdf>`_
+## * `SNOBOL4 and SPITBOL Resources
+##   <http://www.snobol4.org>`_
+##
 ## Pattern Matching Tutorial
 ## =========================
 ##
