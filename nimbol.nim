@@ -945,7 +945,7 @@ var anchoredMode* : bool = false ## \
 const stackSize : Positive = 20 ## \
   ## Size used for internal pattern matching stack.
 
-type MatchResult = object
+type MatchResult* = object
   ## Type used to record result of pattern match
   res : ptr String ## \
     ## Pointer to subject string. Set to ``nil`` if match failed
