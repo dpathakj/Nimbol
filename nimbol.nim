@@ -200,6 +200,14 @@
 ##                 pattern ``p`` may contain any number of pattern elements
 ##                 including the use of alternation and concatenation.
 ##
+##
+##   ``Bal(o, c)`` Matches a non-empty string that is balanced with respect to
+##                 the open and close characters ``o`` and ``c``,
+##                 provided. Examples of balanced strings are ``"abc"``,
+##                 ``"a[[b]c]"``, and ``"a{b}c{d}e"``.  Bal matches the shortest
+##                 possible balanced string on the first attempt, and if there
+##                 is a subsequent failure, attempts to extend the string.
+##
 ##   ``Break(s)``  Where ``s`` is a string, matches a string of zero or more
 ##                 characters up to but not including a break character that is
 ##                 one of the characters given in the string ``s``.  Can match
@@ -686,7 +694,6 @@ type
   PatternCode = enum
     pcArbY,
     pcAssign,
-    pcBal,
     pcBreakXX,
     pcAbort,
     pcEOP,
@@ -756,6 +763,8 @@ type
     pcNSpanCH,
     pcSpanCH,
 
+    pcBal,
+
     pcAnyCS,
     pcBreakCS,
     pcBreakXCS,
@@ -796,6 +805,10 @@ type
     pcSpanSF,
     pcStringSF
 
+  BalChars = object
+    ## Open and close characters for ``Bal``
+    open, close: Character
+
   PE = object
     case pCode: PatternCode
     of pcArbY..pcUnanchored: nil
@@ -817,6 +830,7 @@ type
     of pcSetcur: val: ref Natural
     of pcSetcurP: valPtr: ptr Natural
     of pcAnyCH..pcSpanCH: elem: Character
+    of pcBal: bal: BalChars
     of pcAnyCS..pcSpanCS: es: CharacterSet
     of pcArbnoY..pcTabNat: nat: Natural
     of pcPosNF..pcTabNF: nf: NaturalFunc
@@ -945,7 +959,6 @@ const okForSimpleArbno: array[PatternCode, bool] =
   [
     pcArbY: false,
     pcAssign: false,
-    pcBal: false,
     pcBreakXX: false,
     pcAbort: false,
     pcEOP: false,
@@ -1014,6 +1027,8 @@ const okForSimpleArbno: array[PatternCode, bool] =
     pcNotAnyCH: true,
     pcNSpanCH: false,
     pcSpanCH: true,
+
+    pcBal: false,
 
     pcAnyCS: true,
     pcBreakCS: false,
@@ -1988,6 +2003,15 @@ proc newPE(
     pCode: PatternCode;
     index: Natural;
     pThen: ref PE;
+    open, close: Character): ref PE =
+  result = newPE(pCode, index, pThen)
+  result.bal.open = open
+  result.bal.close = close
+
+proc newPE(
+    pCode: PatternCode;
+    index: Natural;
+    pThen: ref PE;
     alt: ref PE): ref PE =
   result = newPE(pCode, index, pThen)
   result.alt = alt
@@ -2728,11 +2752,17 @@ proc Arbno*(p: Pattern): Pattern =
 # Bal
 # ---
 
+proc Bal*(open, close: Character): Pattern {.inline.} =
+  ## Constructs a pattern that will match any non-empty string that is balanced
+  ## with respect to the ``open`` and ``close`` characters provided.  Attempts
+  ## to extend the string if a subsequent failure occurs.
+  return Pattern(stk: 1, p: newPE(pcBal, 1, EOP, open, close))
+
 proc Bal*(): Pattern {.inline.} =
   ## Constructs a pattern that will match any non-empty string that is
   ## parentheses balanced with respect to the normal parentheses characters.
   ## Attempts to extend the string if a subsequent failure occurs.
-  return Pattern(stk: 1, p: newPE(pcBal, 1, EOP))
+  return Pattern(stk: 1, p: newPE(pcBal, 1, EOP, '(', ')'))
 
 
 # Break
@@ -2905,6 +2935,7 @@ proc NSpan*(str: ptr String): Pattern {.inline.} =
 proc NSpan*(str: StringFunc): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcNSpanSF, 1, EOP, str))
 
+
 # Pos
 # ---
 
@@ -2921,17 +2952,6 @@ proc Pos*(Count: ref Natural): Pattern {.inline.} =
 
 proc Pos*(Count: ptr Natural): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcPosNP, 1, EOP, Count))
-
-# Replace
-# -------
-
-proc Replace*(result: var MatchResult; Replace: String) {.inline.} =
-  ## Given a previous call to match which set result, performs a pattern
-  ## replacement if the match was successful. Has no effect if the match
-  ## failed. This call should immediately follow the match call.
-  if result.res != nil:
-    result.res[][result.start..result.stop] = Replace
-    #result.res = nil
 
 
 # Rem
@@ -3165,7 +3185,7 @@ proc imageOne(
     result.add("Any('" & e.elem & "')")
 
   of pcBal:
-    result.add("Bal")
+    result.add("Bal(\'" & e.bal.open & "\', \'" & e.bal.close & "\')")
 
   of pcBreakCH:
     result.add("Break('" & e.elem & "')")
@@ -3627,6 +3647,10 @@ proc dump*(pat: Pattern) =
       pcNSpanCH,
       pcSpanCH:
       put('\'' & e.elem & '\'')
+
+    of
+      pcBal:
+      put("(\'" & e.bal.open & "\', \'" & e.bal.close & "\')")
 
     of
       pcAnyCS,
@@ -4228,15 +4252,15 @@ proc xMatch(
       debugMatch($(node) & "matching or extending Bal")
       if cursor >= len or subject[cursor] == ')':
         state = StateFail
-      elif subject[cursor] == '(':
+      elif subject[cursor] == node.bal.open:
         var parenCount: Natural = 1
         while true:
           inc(cursor)
           if cursor >= len:
             state = StateFail
-          elif subject[cursor] == '(':
+          elif subject[cursor] == node.bal.open:
             inc(parenCount)
-          elif subject[cursor] == ')':
+          elif subject[cursor] == node.bal.close:
             dec(parenCount)
             if parenCount == 0: break
       inc(cursor)
@@ -5044,6 +5068,17 @@ proc match*(subject: var String; pat: Pattern; res: var MatchResult): bool =
     false
 
 
+# Replace
+# -------
+
+proc Replace*(result: var MatchResult; Replace: String) {.inline.} =
+  ## Given a previous call to match which set result, performs a pattern
+  ## replacement if the match was successful. Has no effect if the match
+  ## failed. This call should immediately follow the match call.
+  if result.res != nil:
+    result.res[][result.start..result.stop] = Replace
+
+
 when isMainModule:
 
   import strutils
@@ -5267,14 +5302,17 @@ when isMainModule:
     let subject3 = "())"
     let subject4 = "())("
     let subject5 = "((())"
+    let subject6 = "{}{{}}{pp{}}"
 
     let p1 = Pos(0) & Bal() & Rpos(0)
+    let p2 = Pos(0) & Bal('{', '}') & Rpos(0)
 
     assert match(subject1, p1) == true
     assert match(subject2, p1) == true
     assert match(subject3, p1) == false
     assert match(subject4, p1) == false
     assert match(subject5, p1) == false
+    assert match(subject6, p2) == true
 
   # Break
   block:
