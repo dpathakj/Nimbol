@@ -1215,6 +1215,16 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
              ## for matching this pattern. See description of pattern history stack
              ## in body.
   p: ref PE                     ## Pointer to initial pattern element for pattern"><wbr />Pattern</a></li>
+  <li><a class="reference" href="#MatchResult"
+    title="MatchResult = object
+  res: ptr String               ## \
+               ## Pointer to subject string. Set to ``nil`` if match failed
+  start: Natural               ## \
+               ## Starting index position of matched section of \
+               ## subject string. Only valid if ``res`` is ``non-nil``.
+  stop: Natural ## \
+              ## Ending index position (1&#x27;s origin) of matched section of \
+              ## subject string. Only valid if ``res`` is ``non-nil``."><wbr />Match<wbr />Result</a></li>
 
   </ul>
 </li>
@@ -1475,14 +1485,12 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
     title="dump(pat: Pattern)"><wbr />dump</a></li>
   <li><a class="reference" href="#match,String,Pattern"
     title="match(subject: String; pat: Pattern): bool"><wbr />match</a></li>
-  <li><a class="reference" href="#match,String,Pattern,String"
-    title="match(subject: var String; pat: Pattern; Replace: String): bool"><wbr />match</a></li>
   <li><a class="reference" href="#match,String,PString"
     title="match(subject: String; pat: PString): bool"><wbr />match</a></li>
+  <li><a class="reference" href="#match,String,Pattern,String"
+    title="match(subject: var String; pat: Pattern; Replace: String): bool"><wbr />match</a></li>
   <li><a class="reference" href="#match,String,PString,String"
     title="match(subject: var String; pat: PString; Replace: String): bool"><wbr />match</a></li>
-  <li><a class="reference" href="#match,String,PString_2"
-    title="match(subject: String; pat: PString)"><wbr />match</a></li>
   <li><a class="reference" href="#match,String,PString,String_2"
     title="match(subject: var String; pat: PString; Replace: String)"><wbr />match</a></li>
   <li><a class="reference" href="#match,String,Pattern,MatchResult"
@@ -2163,6 +2171,22 @@ class="link-seesrc" target="_blank">Source</a>
 Type representing a pattern. This package provides a complete set of operations for constructing patterns that can be used in the pattern matching operations provided.
 &nbsp;&nbsp;<a
 href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L865"
+class="link-seesrc" target="_blank">Source</a>
+</dd>
+<dt id="MatchResult"><a name="MatchResult"></a><pre><span class="Identifier">MatchResult</span> <span class="Other">=</span> <span class="Keyword">object</span>
+  <span class="Identifier">res</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">String</span>               <span class="Comment">## \</span>
+               <span class="Comment">## Pointer to subject string. Set to ``nil`` if match failed</span>
+  <span class="Identifier">start</span><span class="Other">:</span> <span class="Identifier">Natural</span>               <span class="Comment">## \</span>
+               <span class="Comment">## Starting index position of matched section of \</span>
+               <span class="Comment">## subject string. Only valid if ``res`` is ``non-nil``.</span>
+  <span class="Identifier">stop</span><span class="Other">:</span> <span class="Identifier">Natural</span> <span class="Comment">## \</span>
+              <span class="Comment">## Ending index position (1's origin) of matched section of \</span>
+              <span class="Comment">## subject string. Only valid if ``res`` is ``non-nil``.</span>
+  </pre></dt>
+<dd>
+Type used to record result of pattern match
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L948"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 
@@ -3100,24 +3124,24 @@ class="link-seesrc" target="_blank">Source</a>
 <dt id="match"><a name="match,String,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
     <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">WriteIOEffect</span><span class="Other">,</span> <span class="Identifier">RootEffect</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
-
+The subject is matched against the pattern.  Any immediate or deferred assignments or writes are executed, and the returned value indicates whether or not the match succeeded.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5014"
-class="link-seesrc" target="_blank">Source</a>
-</dd>
-<dt id="match"><a name="match,String,Pattern,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">Replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
-    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">WriteIOEffect</span><span class="Other">,</span> <span class="Identifier">RootEffect</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
-<dd>
-
-&nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5027"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5010"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,PString"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5036"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5020"
+class="link-seesrc" target="_blank">Source</a>
+</dd>
+<dt id="match"><a name="match,String,Pattern,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">Replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">WriteIOEffect</span><span class="Other">,</span> <span class="Identifier">RootEffect</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
+<dd>
+The subject is matched against the pattern.  Any immediate or deferred assignments or writes are executed, and the returned value indicates whether or not the match succeeded.  If the match succeeds, then the matched part of the subject string is replaced by the given Replace string.
+&nbsp;&nbsp;<a
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5038"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,PString,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">Replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
@@ -3125,15 +3149,7 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5050"
-class="link-seesrc" target="_blank">Source</a>
-</dd>
-<dt id="match"><a name="match,String,PString_2"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span>
-                                       <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">WriteIOEffect</span><span class="Other">,</span> <span class="Identifier">RootEffect</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
-<dd>
-
-&nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5059"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5051"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,PString,String_2"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">Replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span> <span class="Other">{.</span>
@@ -3141,7 +3157,7 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5066"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5060"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,Pattern,MatchResult"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">res</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">MatchResult</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
@@ -3149,14 +3165,14 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5075"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5073"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Replace"><a name="Replace,MatchResult,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Replace</span><span class="Other">(</span><span class="Identifier">result</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">MatchResult</span><span class="Other">;</span> <span class="Identifier">Replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Given a previous call to match which set result, performs a pattern replacement if the match was successful. Has no effect if the match failed. This call should immediately follow the match call.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5095"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5089"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 
@@ -3169,7 +3185,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-09-12 23:08:45 UTC</small>
+        <small>Made with Nim. Generated: 2015-09-12 23:27:36 UTC</small>
       </div>
     </div>
   </div>
