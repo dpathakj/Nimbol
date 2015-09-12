@@ -707,11 +707,22 @@ type
     pcArbnoX,
 
     pcRpat,
+    pcRpatP,
 
     pcPredFunc,
 
     pcAssignImm,
     pcAssignOnM,
+    pcAnySR,
+    pcBreakSR,
+    pcBreakXSR,
+    pcNotAnySR,
+    pcNSpanSR,
+    pcSpanSR,
+    pcStringSR,
+
+    pcAssignImmP,
+    pcAssignOnMP,
     pcAnySP,
     pcBreakSP,
     pcBreakXSP,
@@ -723,6 +734,9 @@ type
     pcWriteImm,
     pcWriteOnM,
 
+    pcWriteImmP,
+    pcWriteOnMP,
+
     pcNil,
     pcString,
     pcString2,
@@ -732,6 +746,7 @@ type
     pcString6,
 
     pcSetcur,
+    pcSetcurP,
 
     pcAnyCH,
     pcBreakCH,
@@ -785,10 +800,13 @@ type
     case pCode: PatternCode
     of pcArbY..pcUnanchored: nil
     of pcAlt..pcArbnoX: alt: ref PE
-    of pcRpat: patPtr: ptr Pattern
+    of pcRpat: patRef: ref Pattern
+    of pcRpatP: patPtr: ptr Pattern
     of pcPredFunc: boolFunc: BoolFunc
-    of pcAssignImm..pcStringSP: vp: ptr String
-    of pcWriteImm, pcWriteOnM: filePtr: ptr File
+    of pcAssignImm..pcStringSR: vr: ref String
+    of pcAssignImmP..pcStringSP: vp: ptr String
+    of pcWriteImm, pcWriteOnM: fileRef: ref File
+    of pcWriteImmP, pcWriteOnMP: filePtr: ptr File
     of pcNil: nil
     of pcString: str: String
     of pcString2: str2: CharArray[2]
@@ -796,7 +814,8 @@ type
     of pcString4: str4: CharArray[4]
     of pcString5: str5: CharArray[5]
     of pcString6: str6: CharArray[6]
-    of pcSetcur: val: ptr Natural
+    of pcSetcur: val: ref Natural
+    of pcSetcurP: valPtr: ptr Natural
     of pcAnyCH..pcSpanCH: elem: Character
     of pcAnyCS..pcSpanCS: es: CharacterSet
     of pcArbnoY..pcTabNat: nat: Natural
@@ -947,11 +966,22 @@ const okForSimpleArbno: array[PatternCode, bool] =
     pcArbnoX: false,
 
     pcRpat: false,
+    pcRpatP: false,
 
     pcPredFunc: false,
 
     pcAssignImm: false,
     pcAssignOnM: false,
+    pcAnySR: true,
+    pcBreakSR: false,
+    pcBreakXSR: false,
+    pcNotAnySR: true,
+    pcNSpanSR: false,
+    pcSpanSR: true,
+    pcStringSR: false,
+
+    pcAssignImmP: false,
+    pcAssignOnMP: false,
     pcAnySP: true,
     pcBreakSP: false,
     pcBreakXSP: false,
@@ -963,6 +993,9 @@ const okForSimpleArbno: array[PatternCode, bool] =
     pcWriteImm: false,
     pcWriteOnM: false,
 
+    pcWriteImmP: false,
+    pcWriteOnMP: false,
+
     pcNil: false,
     pcString: true,
     pcString2: true,
@@ -972,6 +1005,7 @@ const okForSimpleArbno: array[PatternCode, bool] =
     pcString6: true,
 
     pcSetcur: false,
+    pcSetcurP: false,
 
     pcAnyCH: true,
     pcBreakCH: false,
@@ -1545,7 +1579,7 @@ type StackEntry = object
 ## restores the outer stack base, and signals failure.
 ##
 ## If the match of ``p`` succeeds, then node ``a``, which is the actual
-## pcAssignImm node, executes the assignment (using the stack
+## pcAssignImmP node, executes the assignment (using the stack
 ## base to locate the entry with the saved starting cursor value),
 ## and the pops the inner region. There are two possibilities, if
 ## matching ``p`` left no stack entries, then all traces of the inner
@@ -1588,7 +1622,7 @@ type StackEntry = object
 ## The operation of this pattern is identical to that described above
 ## for deferred assignment, up to the point where ``p`` has been matched.
 ##
-## The ``a`` node, which is the pcAssignOnM node first pushes a
+## The ``a`` node, which is the pcAssignOnMP node first pushes a
 ## pcAssign node onto the history stack. This node saves the ending
 ## cursor and acts as a flag for the final assignment, as further
 ## described below.
@@ -1607,7 +1641,7 @@ type StackEntry = object
 ##    (stack entries made before assign pattern)
 ##
 ##    (Special entry, node points to copy of
-##     the pcAssignOnM node, and the
+##     the pcAssignOnMP node, and the
 ##     cursor field saves the initial cursor).
 ##
 ##    (pcRRemove entry, "cursor" value is saved base value for the enclosing
@@ -1631,7 +1665,7 @@ type StackEntry = object
 ## To optimize the common case where no assign-on-match operations
 ## are present, a global flag AssignOnM is maintained which is
 ## initialize to False, and gets set true as part of the execution
-## of the pcAssignOnM node. The scan of the history stack for
+## of the pcAssignOnMP node. The scan of the history stack for
 ## pcAssign entries is done only if this flag is set.
 ##
 ## The node numbering of the constituent pattern ``p`` is not affected.  Where
@@ -1787,7 +1821,7 @@ type StackEntry = object
 ##   | e |---->| p |---->| w |---->
 ##   +---+     +---+     +---+
 ##
-## Here ``e`` is the pcREnter node and ``w`` is the pcWriteImm node. The
+## Here ``e`` is the pcREnter node and ``w`` is the pcWriteImmP node. The
 ## handling is identical to that described above for Assign Immediate,
 ## except that at the point where a successful match occurs, the matched
 ## substring is written to the referenced file.
@@ -1806,7 +1840,7 @@ type StackEntry = object
 ##   | e |---->| p |---->| w |---->
 ##   +---+     +---+     +---+
 ##
-## Here ``e`` is the pcREnter node and ``W`` is the pcWriteOnM node. The
+## Here ``e`` is the pcREnter node and ``W`` is the pcWriteOnMP node. The
 ## handling is identical to that described above for Assign On Match,
 ## except that at the point where a successful match has completed,
 ## the matched substring is written to the referenced file.
@@ -1874,9 +1908,25 @@ proc newPE(
     pCode: PatternCode;
     index: Natural;
     pThen: ref PE;
+    vr: ref String): ref PE =
+  result = newPE(pCode, index, pThen)
+  result.vr = vr
+
+proc newPE(
+    pCode: PatternCode;
+    index: Natural;
+    pThen: ref PE;
     vp: ptr String): ref PE =
   result = newPE(pCode, index, pThen)
   result.vp = vp
+
+proc newPE(
+    pCode: PatternCode;
+    index: Natural;
+    pThen: ref PE;
+    fileRef: ref File): ref PE =
+  result = newPE(pCode, index, pThen)
+  result.fileRef = fileRef
 
 proc newPE(
     pCode: PatternCode;
@@ -1893,6 +1943,14 @@ proc newPE(
     patPtr: ptr Pattern): ref PE =
   result = newPE(pCode, index, pThen)
   result.patPtr = patPtr
+
+proc newPE(
+    pCode: PatternCode;
+    index: Natural;
+    pThen: ref PE;
+    patRef: ref Pattern): ref PE =
+  result = newPE(pCode, index, pThen)
+  result.patRef = patRef
 
 proc newPE(
     pCode: PatternCode;
@@ -1996,9 +2054,17 @@ proc newPEVal(
     pCode: PatternCode;
     index: Natural;
     pThen: ref PE;
-    val: ptr Natural): ref PE {.inline.} =
+    val: ref Natural): ref PE {.inline.} =
     result = newPE(pCode, index, pThen)
     result.val = val
+
+proc newPEValPtr(
+    pCode: PatternCode;
+    index: Natural;
+    pThen: ref PE;
+    valPtr: ptr Natural): ref PE {.inline.} =
+    result = newPE(pCode, index, pThen)
+    result.valPtr = valPtr
 
 proc toPE(c: PChar): ref PE {.inline.} =
   ## Given a character, constructs a pattern element that matches
@@ -2079,6 +2145,9 @@ proc `$`(s: openarray[Character]): string =
 proc `$`(bf: BoolFunc): string =
   return "boolFunc(" & "BoolFunc" & ')'
 
+proc `$`(fr: ref File): string =
+  return "fileRef(" & $cast[int](fr) & ')'
+
 proc `$`(fp: ptr File): string =
   return "filePtr(" & $cast[int](fp) & ')'
 
@@ -2091,11 +2160,17 @@ proc `$`(nr: ref Natural): string =
 proc `$`(np: ptr Natural): string =
   return "NP(" & $cast[int](np) & ')'
 
+proc `$`(pr: ref Pattern): string =
+  return "patPtr(" & $cast[int](pr) & ')'
+
 proc `$`(pp: ptr Pattern): string =
   return "patPtr(" & $cast[int](pp) & ')'
 
 proc `$`(vf: StringFunc): string =
   return "SF(" & "StringFunc" & ')'
+
+proc `$`(vr: ref String): string =
+  return "SR(" & $cast[int](vr) & ')'
 
 proc `$`(vp: ptr String): string =
   return "SP(" & $cast[int](vp) & ')'
@@ -2276,7 +2351,7 @@ proc `&=`*(l: var Pattern; r: Pattern) {.inline.} =
 # Pattern Assignment Functions
 # ----------------------------
 
-proc `*`*(p: Pattern; val: var String): Pattern =
+proc `*`*(p: Pattern; val: ref String): Pattern =
   ## Matches ``p``, and if the match succeeds, assigns the matched substring to
   ## the given string variable ``val``. This assignment happens as soon as the
   ## substring is matched, and if the pattern ``p1`` is matched more than once
@@ -2294,22 +2369,28 @@ proc `*`*(p: Pattern; val: var String): Pattern =
   ## 1``, and the e node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,    0, EOP)
-  let a = newPE(pcAssignImm, 0, EOP, addr(val))
+  let a = newPE(pcAssignImm, 0, EOP, val)
+  Pattern(stk: p.stk + 3, p: Bracket(e, pat, a))
+
+proc `*`*(p: Pattern; val: var String): Pattern =
+  let pat = copy(p.p)
+  let e = newPE(pcREnter,    0, EOP)
+  let a = newPE(pcAssignImmP, 0, EOP, addr(val))
   Pattern(stk: p.stk + 3, p: Bracket(e, pat, a))
 
 proc `*`*(ps: PString; val: var String): Pattern =
   let pat = toPE(ps)
   let e = newPE(pcREnter,    0, EOP)
-  let a = newPE(pcAssignImm, 0, EOP, addr(val))
+  let a = newPE(pcAssignImmP, 0, EOP, addr(val))
   Pattern(stk: 3, p: Bracket(e, pat, a))
 
 proc `*`*(pc: PChar; val: var String): Pattern =
   let pat = toPE(pc)
   let e = newPE(pcREnter,    0, EOP)
-  let a = newPE(pcAssignImm, 0, EOP, addr(val))
+  let a = newPE(pcAssignImmP, 0, EOP, addr(val))
   Pattern(stk: 3, p: Bracket(e, pat, a))
 
-proc `*`*(p: Pattern; Fil: var File): Pattern =
+proc `*`*(p: Pattern; Fil: ref File): Pattern =
   ## These are similar to the corresponding pattern assignment operations except
   ## that instead of setting the value of a variable, the matched substring is
   ## written to the appropriate file. This can be useful in following the
@@ -2327,26 +2408,32 @@ proc `*`*(p: Pattern; Fil: var File): Pattern =
   ## 1``, and the ``e`` node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteImm, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteImmP, 0, EOP, Fil)
+  Pattern(stk: 3, p: Bracket(e, pat, w))
+
+proc `*`*(p: Pattern; Fil: var File): Pattern =
+  let pat = copy(p.p)
+  let e = newPE(pcREnter,   0, EOP)
+  let w = newPE(pcWriteImmP, 0, EOP, addr(Fil))
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
 proc `*`*(ps: PString; Fil: var File): Pattern =
   let pat = toPE(ps)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteImm, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteImmP, 0, EOP, addr(Fil))
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
 proc `*`*(pc: PChar; Fil: var File): Pattern =
   let pat = toPE(pc)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteImm, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteImmP, 0, EOP, addr(Fil))
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
 
 # Pattern Assignment Functions
 # ----------------------------
 
-proc `**`*(p: Pattern; val: var String): Pattern =
+proc `**`*(p: Pattern; val: ref String): Pattern =
   ## Like "*" above, except that the assignment happens at most once after the
   ## entire match is completed successfully. If the match fails, then no
   ## assignment takes place.
@@ -2362,21 +2449,33 @@ proc `**`*(p: Pattern; val: var String): Pattern =
   ## 1``, and the ``e`` node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,    0, EOP)
-  let a = newPE(pcAssignOnM, 0, EOP, addr(val))
+  let a = newPE(pcAssignOnM, 0, EOP, val)
+  Pattern(stk: p.stk + 3, p: Bracket(e, pat, a))
+
+proc `**`*(p: Pattern; val: var String): Pattern =
+  let pat = copy(p.p)
+  let e = newPE(pcREnter,    0, EOP)
+  let a = newPE(pcAssignOnMP, 0, EOP, addr(val))
   Pattern(stk: p.stk + 3, p: Bracket(e, pat, a))
 
 proc `**`*(ps: PString; val: var String): Pattern =
   let pat = toPE(ps)
   let e = newPE(pcREnter,    0, EOP)
-  let a = newPE(pcAssignOnM, 0, EOP, addr(val))
+  let a = newPE(pcAssignOnMP, 0, EOP, addr(val))
   Pattern(stk: 3, p: Bracket(e, pat, a))
 
 proc `**`*(pc: PChar; val: var String): Pattern =
   let pat = toPE(pc)
   let e = newPE(pcREnter,    0, EOP)
-  let a = newPE(pcAssignOnM, 0, EOP, addr(val))
+  let a = newPE(pcAssignOnMP, 0, EOP, addr(val))
   Pattern(stk: 3, p: Bracket(e, pat, a))
 
+
+proc `**`*(p: Pattern; Fil: ref File): Pattern =
+  let pat = copy(p.p)
+  let e = newPE(pcREnter,   0, EOP)
+  let w = newPE(pcWriteOnM, 0, EOP, Fil)
+  Pattern(stk: p.stk + 3, p: Bracket(e, pat, w))
 
 proc `**`*(p: Pattern; Fil: var File): Pattern =
   ## Write on match::
@@ -2390,24 +2489,30 @@ proc `**`*(p: Pattern; Fil: var File): Pattern =
   ## 1``, and the ``e`` node is ``n + 2``.
   let pat = copy(p.p)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteOnM, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteOnMP, 0, EOP, addr(Fil))
   Pattern(stk: p.stk + 3, p: Bracket(e, pat, w))
 
 proc `**`*(ps: PString; Fil: var File): Pattern =
   let pat = toPE(ps)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteOnM, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteOnMP, 0, EOP, addr(Fil))
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
 proc `**`*(pc: PChar; Fil: var File): Pattern =
   let pat = toPE(pc)
   let e = newPE(pcREnter,   0, EOP)
-  let w = newPE(pcWriteOnM, 0, EOP, addr(Fil))
+  let w = newPE(pcWriteOnMP, 0, EOP, addr(Fil))
   Pattern(stk: 3, p: Bracket(e, pat, w))
 
 
 # Deferred Matching Operations
 # ----------------------------
+
+proc `+`*(str: ref String): Pattern {.inline.} =
+  ## Here ``Str`` must be a string variable. This function constructs a pattern
+  ## which at pattern matching time will access the current value of this
+  ## variable, and match against these characters.
+  Pattern(stk: 0, p: newPE(pcStringSR, 1, EOP, str))
 
 proc `+`*(str: var String): Pattern {.inline.} =
   ## Here ``Str`` must be a string variable. This function constructs a pattern
@@ -2421,11 +2526,17 @@ proc `+`*(str: StringFunc): Pattern {.inline.} =
   ## that is returned by the call.
   Pattern(stk: 0, p: newPE(pcStringSF, 1, EOP, str))
 
+proc `+`*(P: ref Pattern): Pattern {.inline.} =
+  ## Here ``P`` must be a Pattern variable. This function constructs a pattern
+  ## which at pattern matching time will access the current value of this
+  ## variable, and match against the pattern value.
+  Pattern(stk: 3, p: newPE(pcRpat, 1, EOP, P))
+
 proc `+`*(P: var Pattern): Pattern {.inline.} =
   ## Here ``P`` must be a Pattern variable. This function constructs a pattern
   ## which at pattern matching time will access the current value of this
   ## variable, and match against the pattern value.
-  Pattern(stk: 3, p: newPE(pcRpat, 1, EOP, addr(P)))
+  Pattern(stk: 3, p: newPE(pcRpatP, 1, EOP, addr(P)))
 
 proc `+`*(P: BoolFunc): Pattern {.inline.} =
   ## Constructs a predicate pattern function that at pattern matching time calls
@@ -2484,6 +2595,9 @@ proc Any*(str: Character): Pattern {.inline.} =
 
 proc Any*(str: CharacterSet): Pattern {.inline.} =
   Pattern(stk: 0, p: newPE(pcAnyCS, 1, EOP, str))
+
+proc Any*(str: ref String): Pattern {.inline.} =
+  Pattern(stk: 0, p: newPE(pcAnySR, 1, EOP, str))
 
 proc Any*(str: ptr String): Pattern {.inline.} =
   Pattern(stk: 0, p: newPE(pcAnySP, 1, EOP, str))
@@ -2590,6 +2704,9 @@ proc Break*(str: Character): Pattern {.inline.} =
 proc Break*(str: CharacterSet): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcBreakCS, 1, EOP, str))
 
+proc Break*(str: ref String): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcBreakSR, 1, EOP, str))
+
 proc Break*(str: ptr String): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcBreakSP, 1, EOP, str))
 
@@ -2611,6 +2728,9 @@ proc BreakX*(str: Character): Pattern {.inline.} =
 
 proc BreakX*(str: CharacterSet): Pattern {.inline.} =
   BreakXMake(newPE(pcBreakXCS, 3, nil, str))
+
+proc BreakX*(str: ref String): Pattern {.inline.} =
+  BreakXMake(newPE(pcBreakXSR, 3, nil, str))
 
 proc BreakX*(str: ptr String): Pattern {.inline.} =
   BreakXMake(newPE(pcBreakXSP, 3, nil, str))
@@ -2704,6 +2824,9 @@ proc NotAny*(str: Character): Pattern {.inline.} =
 proc NotAny*(str: CharacterSet): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcNotAnyCS, 1, EOP, str))
 
+proc NotAny*(str: ref String): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcNotAnySR, 1, EOP, str))
+
 proc NotAny*(str: ptr String): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcNotAnySP, 1, EOP, str))
 
@@ -2724,6 +2847,9 @@ proc NSpan*(str: Character): Pattern {.inline.} =
 
 proc NSpan*(str: CharacterSet): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcNSpanCS, 1, EOP, str))
+
+proc NSpan*(str: ref String): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcNSpanSR, 1, EOP, str))
 
 proc NSpan*(str: ptr String): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcNSpanSP, 1, EOP, str))
@@ -2809,11 +2935,17 @@ proc Rtab*(Count: ptr Natural): Pattern {.inline.} =
 # Setcur
 # ------
 
+proc Setcur*(val: ref Natural): Pattern {.inline.} =
+  ## Constructs a pattern that matches the ``nil`` string, and assigns the
+  ## current cursor position in the string. This value is the number of
+  ## characters matched so far. So it is zero at the start of the match.
+  return Pattern(stk: 0, p: newPEVal(pcSetcur, 1, EOP, val))
+
 proc Setcur*(val: var Natural): Pattern {.inline.} =
   ## Constructs a pattern that matches the ``nil`` string, and assigns the
   ## current cursor position in the string. This value is the number of
   ## characters matched so far. So it is zero at the start of the match.
-  return Pattern(stk: 0, p: newPEVal(pcSetcur, 1, EOP, addr(val)))
+  return Pattern(stk: 0, p: newPEValPtr(pcSetcurP, 1, EOP, addr(val)))
 
 
 # Span
@@ -2831,6 +2963,9 @@ proc Span*(str: Character): Pattern {.inline.} =
 
 proc Span*(str: CharacterSet): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcSpanCS, 1, EOP, str))
+
+proc Span*(str: ref String): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcSpanSR, 1, EOP, str))
 
 proc Span*(str: ptr String): Pattern {.inline.} =
   return Pattern(stk: 0, p: newPE(pcSpanSP, 1, EOP, str))
@@ -2943,6 +3078,9 @@ proc imageOne(
   of pcAnySF:
     result.add("Any(" & $e.vf & ')')
 
+  of pcAnySR:
+    result.add("Any(" & $e.vr & ')')
+
   of pcAnySP:
     result.add("Any(" & $e.vp & ')')
 
@@ -2961,9 +3099,17 @@ proc imageOne(
 
   of pcAssignImm:
     deleteAmpersand(result)
+    result.add("* " & $(refs[e.index - 1].vr))
+
+  of pcAssignImmP:
+    deleteAmpersand(result)
     result.add("* " & $(refs[e.index - 1].vp))
 
   of pcAssignOnM:
+    deleteAmpersand(result)
+    result.add("** " & $(refs[e.index - 1].vr))
+
+  of pcAssignOnMP:
     deleteAmpersand(result)
     result.add("** " & $(refs[e.index - 1].vp))
 
@@ -2982,6 +3128,9 @@ proc imageOne(
   of pcBreakSF:
     result.add("Break(" & $(e.vf) & ')')
 
+  of pcBreakSR:
+    result.add("Break(" & $(e.vr) & ')')
+
   of pcBreakSP:
     result.add("Break(" & $(e.vp) & ')')
 
@@ -2995,6 +3144,10 @@ proc imageOne(
 
   of pcBreakXSF:
     result.add("BreakX(" & $(e.vf) & ')')
+    er = er.pThen
+
+  of pcBreakXSR:
+    result.add("BreakX(" & $(e.vr) & ')')
     er = er.pThen
 
   of pcBreakXSP:
@@ -3036,6 +3189,9 @@ proc imageOne(
   of pcNotAnySF:
     result.add("NotAny(" & $e.vf & ')')
 
+  of pcNotAnySR:
+    result.add("NotAny(" & $e.vr & ')')
+
   of pcNotAnySP:
     result.add("NotAny(" & $e.vp & ')')
 
@@ -3047,6 +3203,9 @@ proc imageOne(
 
   of pcNSpanSF:
     result.add("NSpan(" & $e.vf & ')')
+
+  of pcNSpanSR:
+    result.add("NSpan(" & $e.vr & ')')
 
   of pcNSpanSP:
     result.add("NSpan(" & $e.vp & ')')
@@ -3073,6 +3232,9 @@ proc imageOne(
     result.add("Rem")
 
   of pcRpat:
+    result.add("(+ " & $e.patRef & ')')
+
+  of pcRpatP:
     result.add("(+ " & $e.patPtr & ')')
 
   of pcPredFunc:
@@ -3105,6 +3267,9 @@ proc imageOne(
   of pcSetcur:
     result.add("Setcur(" & $e.val & ')')
 
+  of pcSetcurP:
+    result.add("Setcur(" & $e.valPtr & ')')
+
   of pcSpanCH:
     result.add("Span('" & e.elem & "')")
 
@@ -3113,6 +3278,9 @@ proc imageOne(
 
   of pcSpanSF:
     result.add("Span(" & $e.vf & ')')
+
+  of pcSpanSR:
+    result.add("Span(" & $e.vr & ')')
 
   of pcSpanSP:
     result.add("Span(" & $e.vp & ')')
@@ -3138,6 +3306,9 @@ proc imageOne(
   of pcStringSF:
     result.add("(+" & $e.vf & ')')
 
+  of pcStringSR:
+    result.add("(+" & $e.vr & ')')
+
   of pcStringSP:
     result.add("(+" & $e.vp & ')')
 
@@ -3159,10 +3330,22 @@ proc imageOne(
   of pcWriteImm:
     result.add('(')
     imageSeq(result, e, refs[e.index - 2], refs, killAmpersand, true)
-    result.add(" * " & $(refs[e.index - 2].filePtr))
+    result.add(" * " & $(refs[e.index - 2].fileRef))
     er = refs[e.index - 2].pThen
 
   of pcWriteOnM:
+    result.add('(')
+    imageSeq(result, e.pThen, refs[e.index - 2], refs, killAmpersand, true)
+    result.add(" ** " & $(refs[e.index - 2].fileRef))
+    er = refs[e.index - 2].pThen
+
+  of pcWriteImmP:
+    result.add('(')
+    imageSeq(result, e, refs[e.index - 2], refs, killAmpersand, true)
+    result.add(" * " & $(refs[e.index - 2].filePtr))
+    er = refs[e.index - 2].pThen
+
+  of pcWriteOnMP:
     result.add('(')
     imageSeq(result, e.pThen, refs[e.index - 2], refs, killAmpersand, true)
     result.add(" ** " & $(refs[e.index - 2].filePtr))
@@ -3332,6 +3515,10 @@ proc dump*(pat: Pattern) =
 
     of
       pcRpat:
+      put($e.patRef)
+
+    of
+      pcRpatP:
       put($e.patPtr)
 
     of
@@ -3341,6 +3528,18 @@ proc dump*(pat: Pattern) =
     of
       pcAssignImm,
       pcAssignOnM,
+      pcAnySR,
+      pcBreakSR,
+      pcBreakXSR,
+      pcNotAnySR,
+      pcNSpanSR,
+      pcSpanSR,
+      pcStringSR:
+      put($e.vr)
+
+    of
+      pcAssignImmP,
+      pcAssignOnMP,
       pcAnySP,
       pcBreakSP,
       pcBreakXSP,
@@ -3353,6 +3552,11 @@ proc dump*(pat: Pattern) =
     of
       pcWriteImm,
       pcWriteOnM:
+      put($e.fileRef)
+
+    of
+      pcWriteImmP,
+      pcWriteOnMP:
       put($e.filePtr)
 
     of pcString: put(e.str)
@@ -3363,6 +3567,8 @@ proc dump*(pat: Pattern) =
     of pcString6: put($e.str6)
 
     of pcSetcur: put($e.val)
+
+    of pcSetcurP: put($e.valPtr)
 
     of
       pcAnyCH,
@@ -3751,12 +3957,22 @@ proc xMatch(
           let nodeOnM = stack[specialEntry].node
           let start = stack[specialEntry].cursor
           let stop = stack[s].cursor - 1
-          if nodeOnM.pCode == pcassignOnM:
+          if nodeOnM.pCode == pcAssignOnM:
+            nodeOnM.vr[] = subject[start..stop]
+            debugMatch($(stack[s].node) &
+                 "deferred assignment of " &
+                 $subject[start..stop])
+          elif nodeOnM.pCode == pcAssignOnMP:
             nodeOnM.vp[] = subject[start..stop]
             debugMatch($(stack[s].node) &
                  "deferred assignment of " &
                  $subject[start..stop])
           elif nodeOnM.pCode == pcWriteOnM:
+            writeLine(nodeOnM.fileRef[], subject[start..stop])
+            debugMatch($(stack[s].node) &
+                 "deferred write of " &
+                 $subject[start..stop])
+          elif nodeOnM.pCode == pcWriteOnMP:
             writeLine(nodeOnM.filePtr[], subject[start..stop])
             debugMatch($(stack[s].node) &
                  "deferred write of " &
@@ -3845,6 +4061,16 @@ proc xMatch(
       else:
         state = StateFail
 
+    # Any(string reference case)
+    of pcAnySR:
+      let u = node.vr[]
+      debugMatch($(node) & "matching Any", u)
+      if cursor < len and subject[cursor] in u:
+        inc(cursor)
+        state = StateSucceed
+      else:
+        state = StateFail
+
     # Any(string pointer case)
     of pcAnySP:
       let u = node.vp[]
@@ -3919,12 +4145,29 @@ proc xMatch(
     of pcAssignImm:
       debugMatch($(node) & "executing immediate assignment of " &
            $subject[stack[stackBase - 1].cursor..cursor-1])
+      node.vr[] = subject[stack[stackBase - 1].cursor..cursor-1]
+      popRegion()
+      state = StateSucceed
+
+    # Assign immediate. This node performs the actual assignment
+    of pcAssignImmP:
+      debugMatch($(node) & "executing immediate assignment of " &
+           $subject[stack[stackBase - 1].cursor..cursor-1])
       node.vp[] = subject[stack[stackBase - 1].cursor..cursor-1]
       popRegion()
       state = StateSucceed
 
     # Assign on match. This node sets up for the eventual assignment
-    of pcassignOnM:
+    of pcAssignOnM:
+      debugMatch($(node) & "registering deferred assignment")
+      stack[stackBase - 1].node = node
+      push(cpAssign)
+      popRegion()
+      assignOnM = true
+      state = StateSucceed
+
+    # Assign on match. This node sets up for the eventual assignment
+    of pcAssignOnMP:
       debugMatch($(node) & "registering deferred assignment")
       stack[stackBase - 1].node = node
       push(cpAssign)
@@ -3983,6 +4226,17 @@ proc xMatch(
           inc(cursor)
       state = StateFail
 
+    # Break(string reference case)
+    of pcBreakSR:
+      let u = node.vr[]
+      debugMatch($(node) & "matching Break", u)
+      while cursor < len:
+        if subject[cursor] in u:
+          state = StateSucceed
+        else:
+          inc(cursor)
+      state = StateFail
+
     # Break(string pointer case)
     of pcBreakSP:
       let u = node.vp[]
@@ -4017,6 +4271,17 @@ proc xMatch(
     # BreakX(string function case)
     of pcBreakXSF:
       let u = node.vf()
+      debugMatch($(node) & "matching BreakX", u)
+      while cursor < len:
+        if subject[cursor] in u:
+          state = StateSucceed
+        else:
+          inc(cursor)
+      state = StateFail
+
+    # BreakX(string reference case)
+    of pcBreakXSR:
+      let u = node.vr[]
       debugMatch($(node) & "matching BreakX", u)
       while cursor < len:
         if subject[cursor] in u:
@@ -4161,6 +4426,16 @@ proc xMatch(
       else:
         state = StateFail
 
+    # NotAny(string reference case)
+    of pcNotAnySR:
+      let u = node.vr[]
+      debugMatch($(node) & "matching NotAny", u)
+      if cursor < len and not(subject[cursor] in u):
+        inc(cursor)
+        state = StateSucceed
+      else:
+        state = StateFail
+
     # NotAny(string pointer case)
     of pcNotAnySP:
       let u = node.vp[]
@@ -4188,6 +4463,14 @@ proc xMatch(
     # NSpan(string function case)
     of pcNSpanSF:
       let u = node.vf()
+      debugMatch($(node) & "matching NSpan", u)
+      while cursor < len and subject[cursor] in u:
+        inc(cursor)
+      state = StateSucceed
+
+    # NSpan(string reference case)
+    of pcNSpanSR:
+      let u = node.vr[]
       debugMatch($(node) & "matching NSpan", u)
       while cursor < len and subject[cursor] in u:
         inc(cursor)
@@ -4289,6 +4572,16 @@ proc xMatch(
       stack[stackPtr + 1].node = peAddr(node.pthen)
       pushRegion()
       debugMatch($(node) & "initiating recursive match")
+      if stackPtr + node.patRef[].stk >= stackArray.len:
+        stack = stackArray.setLen2(stackPtr + node.patRef[].stk)
+      node = peAddr(node.patRef.p)
+      state = Match
+
+    # Initiate recursive match(pattern pointer case)
+    of pcRpatP:
+      stack[stackPtr + 1].node = peAddr(node.pthen)
+      pushRegion()
+      debugMatch($(node) & "initiating recursive match")
       if stackPtr + node.patPtr[].stk >= stackArray.len:
         stack = stackArray.setLen2(stackPtr + node.patPtr[].stk)
       node = peAddr(node.patPtr.p)
@@ -4370,6 +4663,12 @@ proc xMatch(
       node.val[] = cursor
       state = StateSucceed
 
+    # cursor assignment
+    of pcSetcurP:
+      debugMatch($(node) & "matching Setcur")
+      node.valPtr[] = cursor
+      state = StateSucceed
+
     # Span(one character case)
     of pcSpanCH:
       var p = cursor
@@ -4397,6 +4696,19 @@ proc xMatch(
     # Span(string function case)
     of pcSpanSF:
       let u = node.vf()
+      debugMatch($(node) & "matching Span", u)
+      var p = cursor
+      while p < len and subject[p] in u:
+        inc(p)
+      if p != cursor:
+        cursor = p
+        state = StateSucceed
+      else:
+        state = StateFail
+
+    # Span(string reference case)
+    of pcSpanSR:
+      let u = node.vr[]
       debugMatch($(node) & "matching Span", u)
       var p = cursor
       while p < len and subject[p] in u:
@@ -4484,7 +4796,17 @@ proc xMatch(
       else:
         state = StateFail
 
-    # String(vstring pointer case)
+    # String(String reference case)
+    of pcStringSR:
+      let u = node.vr[]
+      debugMatch($(node) & "matching " & u)
+      if subject.subStrEqual(cursor, u):
+        inc(cursor, u.len)
+        state = StateSucceed
+      else:
+        state = StateFail
+
+    # String(String pointer case)
     of pcStringSP:
       let u = node.vp[]
       debugMatch($(node) & "matching " & u)
@@ -4553,13 +4875,29 @@ proc xMatch(
     of pcWriteImm:
       debugMatch($(node) & "executing immediate write of " &
            subject[stack[stackBase - 1].cursor..cursor-1])
+      writeLine(node.fileRef[], subject[stack[stackBase - 1].cursor..cursor-1])
+      popRegion()
+      state = StateSucceed
 
+    # Write immediate. This node performs the actual write
+    of pcWriteImmP:
+      debugMatch($(node) & "executing immediate write of " &
+           subject[stack[stackBase - 1].cursor..cursor-1])
       writeLine(node.filePtr[], subject[stack[stackBase - 1].cursor..cursor-1])
       popRegion()
       state = StateSucceed
 
     # Write on match. This node sets up for the eventual write
     of pcWriteOnM:
+      debugMatch($(node) & "registering deferred write")
+      stack[stackBase - 1].node = node
+      push(cpAssign)
+      popRegion()
+      assignOnM = true
+      state = StateSucceed
+
+    # Write on match. This node sets up for the eventual write
+    of pcWriteOnMP:
       debugMatch($(node) & "registering deferred write")
       stack[stackBase - 1].node = node
       push(cpAssign)
