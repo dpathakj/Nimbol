@@ -1,5 +1,5 @@
-=====================================================
-Nim -- a Compiler for Nim. http://nim-lang.org/
+=====================================================================
+odarrays.nim: Based on code from rtarray.nim in Nim's Runtime Library
 
 Copyright (C) 2006-2015 Andreas Rumpf. All rights reserved.
 
