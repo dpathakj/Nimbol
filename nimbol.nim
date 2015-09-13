@@ -395,7 +395,7 @@
 ## this approach, which of course is only needed if the pattern involved has
 ## side effects, is to do the match in two stages. The call to match sets a
 ## pattern result in a variable of the private type MatchResult, and then a
-## subsequent ``Replace`` operation uses this ``MatchResult`` object to perform
+## subsequent ``replace`` operation uses this ``MatchResult`` object to perform
 ## the required replacement.
 ##
 ## Using this approach, we can now write the above operation properly in a
@@ -405,10 +405,10 @@
 ##   var m : MatchResult
 ##   ...
 ##   match(subject, '(' & Len(1) * c & ')', m)
-##   Replace(m, '[' & c & ']')
+##   replace(m, '[' & c & ']')
 ##
 ## As with other match cases, there is a function and function form of this
-## match call. A call to ``Replace`` after a failed match has no effect. Note
+## match call. A call to ``replace`` after a failed match has no effect. Note
 ## that subject should not be modified between the calls.
 ##
 ## Examples of Pattern Matching
@@ -5003,36 +5003,37 @@ proc match*(subject: String; pat: PString): bool =
 # Match replacement functions
 # ---------------------------
 
-proc match*(subject: var String; pat: Pattern; Replace: String): bool =
-  ## The subject is matched against the pattern.  Any immediate or deferred
+proc match*(subject: var String; pat: Pattern; replace: String): bool =
+  ## The ``subject`` is matched against the pattern.  Any immediate or deferred
   ## assignments or writes are executed, and the returned value indicates
   ## whether or not the match succeeded.  If the match succeeds, then the
-  ## matched part of the subject string is replaced by the given Replace string.
+  ## matched part of the ``subject`` string is replaced by the given ``replace``
+  ## string.
   var start, stop: Natural
   if debugNimbol:
     result = xMatch(true, subject, pat.p, pat.stk, start, stop)
   else:
     result = xMatch(false, subject, pat.p, pat.stk, start, stop)
   if result:
-    subject[start..stop] = Replace
+    subject[start..stop] = replace
 
-proc match*(subject: var String; pat: PString; Replace: String): bool =
+proc match*(subject: var String; pat: PString; replace: String): bool =
   var start, stop: Natural
   if debugNimbol:
     result = xMatch(true, subject, toPE(pat), 0, start, stop)
   else:
     result = xMatch(false, subject, toPE(pat), 0, start, stop)
   if result:
-    subject[start..stop] = Replace
+    subject[start..stop] = replace
 
-proc match*(subject: var String; pat: PString; Replace: String) =
+proc match*(subject: var String; pat: PString; replace: String) =
   var start, stop: Natural
   if debugNimbol:
     discard xMatch(true, subject, toPE(pat), 0, start, stop)
   else:
     discard xMatch(false, subject, toPE(pat), 0, start, stop)
   if start != 0:
-    subject[start..stop] = Replace
+    subject[start..stop] = replace
 
 
 # Match functions returning MatchResult
@@ -5054,12 +5055,12 @@ proc match*(subject: var String; pat: Pattern; res: var MatchResult): bool =
     res.res = nil
     false
 
-proc Replace*(result: var MatchResult; Replace: String) {.inline.} =
+proc replace*(result: var MatchResult; replace: String) {.inline.} =
   ## Given a previous call to match which set result, performs a pattern
   ## replacement if the match was successful. Has no effect if the match
   ## failed. This call should immediately follow the match call.
   if result.res != nil:
-    result.res[][result.start..result.stop] = Replace
+    result.res[][result.start..result.stop] = replace
 
 
 # Tests
@@ -5268,7 +5269,7 @@ when isMainModule:
 
     var match2: MatchResult
     assert match(subject2, p3, match2) == true
-    match2.Replace("<b>" & sss & "</b>")
+    match2.replace("<b>" & sss & "</b>")
     assert match2.res[] == "<b>good</b>bye"
 
     # test "delayed evaluation" of string value
