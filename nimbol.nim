@@ -2597,9 +2597,14 @@ proc `+`*(P: BoolFunc): Pattern {.inline.} =
   Pattern(stk: 3, p: newPE(pcPredFunc, 1, EOP, P))
 
 
-# Pattern alternation. Creates a pattern that will first try to match
-# l and then on a subsequent failure, attempts to match r instead.
-# -------------------------------------------------------------------
+# Pattern alternation
+# -------------------
+
+proc `or`*(l: Pattern; r: Pattern): Pattern {.inline.} =
+  ## Creates a pattern that will first try to match ``l`` and then on a
+  ## subsequent failure, attempts to match ``r`` instead.
+  Pattern(stk: max(l.stk, r.stk) + 1, p: copy(l.p) or copy(r.p))
+
 proc `or`*(l: PString; r: Pattern): Pattern {.inline.} =
   Pattern(stk: r.stk + 1, p: toPE(l) or copy(r.p))
 
@@ -2608,9 +2613,6 @@ proc `or`*(l: Pattern; r: PString): Pattern {.inline.} =
 
 proc `or`*(l: PString; r: PString): Pattern {.inline.} =
   Pattern(stk: 1, p: toPE(l) or toPE(r))
-
-proc `or`*(l: Pattern; r: Pattern): Pattern {.inline.} =
-  Pattern(stk: max(l.stk, r.stk) + 1, p: copy(l.p) or copy(r.p))
 
 proc `or`*(l: PChar;   r: Pattern): Pattern {.inline.} =
   Pattern(stk: 1, p: toPE(l) or copy(r.p))
@@ -2629,8 +2631,16 @@ proc `or`*(l: PChar;   r: PString): Pattern {.inline.} =
 
 
 proc `or=`*(l: var Pattern; r: Pattern): Pattern {.inline.} =
+  ## Creates a pattern that will first try to match ``l`` and then on a
+  ## subsequent failure, attempts to match ``r`` instead.
   l.stk = max(l.stk, r.stk) + 1
   l.p = copy(l.p) or copy(r.p)
+
+proc `or`*(l: var Pattern; r: PString): Pattern {.inline.} =
+  l.p = copy(l.p) or toPE(r)
+
+proc `or`*(l: var Pattern; r: PChar): Pattern {.inline.} =
+  l.p = copy(l.p) or toPE(r)
 
 
 # Any
