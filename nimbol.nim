@@ -513,17 +513,17 @@
 ## recursive patterns as follows::
 ##
 ## .. code-block:: nim
-##   Element, Balanced_String : Pattern
+##   element, balancedString : Pattern
 ##   .
 ##   .
 ##   .
-##   Element = NotAny ("[]{}")
+##   element = NotAny ("[]{}")
 ##               or
-##             ('[' & (+Balanced_String) & ']')
+##             ('[' & (+balancedString) & ']')
 ##               or
-##             ('{' & (+Balanced_String) & '}')
+##             ('{' & (+balancedString) & '}')
 ##
-##   Balanced_String = Element & Arbno(Element)
+##   balancedString = element & Arbno(element)
 ##
 ## Note the important use of ``+`` here to refer to a pattern not yet
 ## defined. Note also that we use assignments precisely because we cannot refer
@@ -533,7 +533,7 @@
 ## primitive pattern element, and for example, the match::
 ##
 ## .. code-block:: nim
-##   match("xy[ab{cd}]", Balanced_String * Current_Output & Fail)
+##   match("xy[ab{cd}]", balancedString * Current_Output & Fail)
 ##
 ## will generate the output:
 ##
@@ -555,8 +555,8 @@
 ##    d
 ##
 ## Note that the function of the fail here is simply to force the pattern
-## Balanced_String to match all possible alternatives. Studying the operation of
-## this pattern in detail is highly instructive.
+## ``balancedString`` to match all possible alternatives. Studying the operation
+## of this pattern in detail is highly instructive.
 ##
 ## Finally we give a rather elaborate example of the use of deferred
 ## matching. The following declarations build up a pattern which will find the
@@ -647,7 +647,6 @@
 ##
 ## A pattern structure is represented as a linked graph of nodes
 ## with the following structure::
-##
 ##     +------------------------------------+
 ##     I                pCode               I
 ##     +------------------------------------+
@@ -669,7 +668,7 @@
 ##     ``pThen`` is a pointer to the successor node, i.e the node to be matched
 ##     if the attempt to match the node succeeds. If this is the last node of
 ##     the pattern to be matched, then Pthen points to a dummy node of kind
-##     pcEOP (end of pattern), which initializes pattern exit.
+##     ``pcEOP`` (end of pattern), which initializes pattern exit.
 ##
 ##     The parameter or parameters are present for certain node types, and the
 ##     type varies with the pattern code.
@@ -942,9 +941,6 @@ var anchoredMode* : bool = false ## \
   ## anchored mode may be achieved in individual pattern matches by using
   ## Fence or Pos(0) at the start of the pattern.
 
-const stackSize : Positive = 20 ## \
-  ## Size used for internal pattern matching stack.
-
 type MatchResult* = object
   ## Type used to record result of pattern match
   res : ptr String ## \
@@ -1114,6 +1110,9 @@ type PtrArray = seq[ptr PE] ## \
 ## popped off, resetting the cursor and the match continues by accessing the
 ## node stored with this entry.
 
+const stackSize : Positive = 20 ## \
+  ## Initial size used for internal pattern matching stack.
+
 type StackEntry = object
 
   cursor: int ## \
@@ -1181,7 +1180,7 @@ type StackEntry = object
 ## total number of elements in the pattern. More precisely, the element
 ## referenced by the ``p`` field of a pattern value, or the element returned by
 ## any of the internal pattern construction routines in the body (that return a
-## value of type ref PE) always is this maximum element,
+## value of type ``ref PE``) always is this maximum element,
 ##
 ## The purpose of this requirement is to allow an immediate determination of the
 ## number of pattern elements within a pattern. This is used to properly size
@@ -1197,9 +1196,9 @@ type StackEntry = object
 ## compound pattern structure.
 ##
 ## The purpose of specifying the stylized numbering structures for the compound
-## patterns is to help simplify the processing in the Image function, since it
+## patterns is to help simplify the processing in the ``$`` operator, since it
 ## eases the task of retrieving the original recursive structure of the pattern
-## from the flat graph structure of elements.  This use in the Image function is
+## from the flat graph structure of elements.  This use in the ``$`` operator is
 ## the only point at which the code makes use of the stylized structures.
 ##
 ## Recursive Pattern Matches
@@ -1225,27 +1224,26 @@ type StackEntry = object
 ##
 ## The second entry corresponds to a standard new region action. A pcRRemove
 ## node is stacked, whose cursor field is used to store the outer stack base,
-## and the stack base is reset to point to this pcRRemove node. Then the
+## and the stack base is reset to point to this ``pcRRemove`` node. Then the
 ## recursive pattern is matched and it can make history stack entries in the
 ## normal matter, so now the stack looks like::
 ##
 ##    (stack entries made by outer level)
 ##
-##    (Special entry, node is (+p) successor
-##     cursor entry is not used)
+##    (Special entry, node is (+p) successor, cursor entry is not used)
 ##
 ##    (pcRRemove entry, "cursor" value is <-- Stack base saved base value for
 ##     the enclosing region)
 ##
 ##    (stack entries made by inner level)
 ##
-## If a subsequent failure occurs and pops the pcRRemove node, it removes
+## If a subsequent failure occurs and pops the ``pcRRemove`` node, it removes
 ## itself and the special entry immediately underneath it, restores the stack
 ## base value for the enclosing region, and then again signals failure to look
 ## for alternatives that were stacked before the recursion was initiated.
 ##
 ## Now we need to consider what happens if the inner pattern succeeds, as
-## signalled by accessing the special pcEOP pattern primitive. First we
+## signalled by accessing the special ``pcEOP`` pattern primitive. First we
 ## recognize the nested case by looking at the Base value. If this Base value is
 ## Stack.first, then the entire match has succeeded, but if the base value is
 ## greater than ``stack.first``, then we have successfully matched an inner
@@ -1258,15 +1256,14 @@ type StackEntry = object
 ## entry to find the appropriate successor node.
 ##
 ## The more complex case arises when the inner match does make stack entries. In
-## this case, the pcEOP processing stacks a special entry whose cursor value
+## this case, the ``pcEOP`` processing stacks a special entry whose cursor value
 ## saves the saved inner base value (the one that references the corresponding
-## pcRRemove value), and whose node pointer references a pcRRemore node, so
-## the stack looks like::
+## ``pcRRemove`` value), and whose node pointer references a ``pcRRemore`` node,
+## so the stack looks like::
 ##
 ##    (stack entries made by outer level)
 ##
-##    (Special entry, node is (+p) successor,
-##     cursor entry is not used)
+##    (Special entry, node is (+p) successor, cursor entry is not used)
 ##
 ##    (pcRRemove entry, "cursor" value is saved base value for the enclosing
 ##     region)
@@ -1278,7 +1275,7 @@ type StackEntry = object
 ##
 ## If the entire match succeeds, then these stack entries are, as usual, ignored
 ## and abandoned. If on the other hand a subsequent failure causes the
-## pcRegionReplace entry to be popped, it restores the inner base value from
+## ``pcRegionReplace`` entry to be popped, it restores the inner base value from
 ## its saved "cursor" value and then fails again.  Note that it is OK that the
 ## cursor is temporarily clobbered by this pop, since the second failure will
 ## reestablish a proper cursor value.
@@ -1294,11 +1291,11 @@ type StackEntry = object
 ## assigned to the structure.
 ##
 ## In all diagrams, solid lines (built with minus signs or vertical bars,
-## represent successor pointers (pThen fields) with > or V used to indicate the
-## direction of the pointer. The initial node of the structure is in the upper
-## left of the diagram. ``a`` dotted line is an alternative pointer from the
-## element above it to the element below it. See individual sections for details
-## on how alternatives are used.
+## represent successor pointers (``pThen`` fields) with ``>`` or ``V`` used to
+## indicate the direction of the pointer. The initial node of the structure is
+## in the upper left of the diagram. ``a`` dotted line is an alternative pointer
+## from the element above it to the element below it. See individual sections
+## for details on how alternatives are used.
 ##
 ##
 ## In the pattern structures listed in this section, a line that looks like
@@ -1334,8 +1331,8 @@ type StackEntry = object
 ## returned is always the same as ``l``, but the pattern referenced by ``l`` is
 ## modified to have ``r`` as a successor. This proc does not copy ``l`` or
 ## ``r``, so if a copy is required, it is the responsibility of the caller. The
-## ``Incr`` parameter is an amount to be added to the ``Nat`` field of any
-## PArbnoY node that is in the left operand, it represents the additional
+## ``incr`` parameter is an amount to be added to the ``nat`` field of any
+## ``PArbnoY`` node that is in the left operand, it represents the additional
 ## stack space required by the right operand.
 ##
 ## Concat needs to traverse the left operand performing the following
@@ -1344,20 +1341,20 @@ type StackEntry = object
 ##   a) Any successor pointers(``pThen`` fields) that are set to ``EOP`` are
 ##      reset to point to the second operand.
 ##
-##   b) Any pcArbnoY node has its stack count field incremented
+##   b) Any ``pcArbnoY`` node has its stack count field incremented
 ##      by the parameter Incr provided for this purpose.
 ##
 ##   d) ``num`` fields of all pattern elements in the left operand are
 ##      adjusted to include the elements of the right operand.
 ##
-## Note: we do not use SetSuccessor in the processing for Concat, since
+## Note: we do not use ``setSuccessor`` in the processing for ``concat``, since
 ## there is no point in doing two traversals, we may as well do everything
 ## at the same time.
 ##
 ## Alternation
 ## -----------
 ##
-## ``a`` pattern (l or r) constructs the structure::
+## ``a`` pattern (``l`` or ``r``) constructs the structure::
 ##
 ##    +---+     +---+
 ##    | a |---->| l |---->
@@ -1368,10 +1365,10 @@ type StackEntry = object
 ##    | r |---->
 ##    +---+
 ##
-## The ``a`` element here is a pcAlt node, and the dotted line represents the
-## contents of the alt field. When the pcAlt element is matched, it stacks a
-## pointer to the leading element of ``r`` on the history stack so that on
-## subsequent failure, a match of ``r`` is attempted.
+## The ``a`` element here is a ``pcAlt`` node, and the dotted line represents
+## the contents of the alt field. When the ``pcAlt`` element is matched, it
+## stacks a pointer to the leading element of ``r`` on the history stack so that
+## on subsequent failure, a match of ``r`` is attempted.
 ##
 ## The ``a`` node is the highest numbered element in the pattern. The original
 ## index numbers of ``r`` are unchanged, but the index numbers of the ``l``
@@ -1389,7 +1386,7 @@ type StackEntry = object
 ## of 25, ``l`` with an index of 24 and ``r`` with an index of 14. We still
 ## know that ``l`` has 10 (24-14) elements in it, numbered 15-24, and
 ## consequently the successor of the alternation structure has an
-## index with a value less than 15. This is used in Image to figure
+## index with a value less than 15. This is used in ``$`` to figure
 ## out the original recursive structure of a pattern.
 ##
 ## To clarify the interaction of the alternation and concatenation
@@ -1444,7 +1441,7 @@ type StackEntry = object
 ## which is the more natural interpretation, but in fact alternation
 ## is associative, and the construction of an alternative changes the
 ## left grouped pattern to the right grouped pattern in any case, so
-## that the Image function produces a more natural looking output.
+## that the ``$`` operator produces a more natural looking output.
 ##
 ## Arb
 ## ---
@@ -2129,7 +2126,7 @@ proc toSet(s: String): CharacterSet =
 
 
 # These are debugging routines, which return a representation of the
-# given access value (they are called only by Image and Dump)
+# given access value (they are called only by ``$`` and ``dump``)
 # ------------------------------------------------------------------
 
 proc `$`(s: openarray[Character]): string =
@@ -2854,7 +2851,7 @@ proc Fence*(p: Pattern): Pattern =
 # Len
 # ---
 
-proc Len*(Count: Natural): Pattern {.inline.} =
+proc Len*(count: Natural): Pattern {.inline.} =
   ## Constructs a pattern that matches exactly the given number of
   ## characters. The pattern fails if fewer than this number of characters
   ## remain to be matched in the string.
@@ -2862,19 +2859,19 @@ proc Len*(Count: Natural): Pattern {.inline.} =
   ## Note, the following is not just an optimization, it is needed to ensure
   ## that Arbno(Len(0)) does not generate an infinite matching loop(since
   ## pcLenNat is okForSimpleArbno).
-  if Count == 0:
+  if count == 0:
     return Pattern(stk: 0, p: newPE(pcNil, 1, EOP))
   else:
-    return Pattern(stk: 0, p: newPE(pcLenNat, 1, EOP, Count))
+    return Pattern(stk: 0, p: newPE(pcLenNat, 1, EOP, count))
 
-proc Len*(Count: NaturalFunc): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcLenNF, 1, EOP, Count))
+proc Len*(count: NaturalFunc): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcLenNF, 1, EOP, count))
 
-proc Len*(Count: ref Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcLenNR, 1, EOP, Count))
+proc Len*(count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcLenNR, 1, EOP, count))
 
-proc Len*(Count: ptr Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcLenNP, 1, EOP, Count))
+proc Len*(count: ptr Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcLenNP, 1, EOP, count))
 
 
 # NotAny
@@ -2929,19 +2926,19 @@ proc NSpan*(str: StringFunc): Pattern {.inline.} =
 # Pos
 # ---
 
-proc Pos*(Count: Natural): Pattern {.inline.} =
-  ## Constructs a pattern that matches the ``nil`` string if exactly ``Count``
+proc Pos*(count: Natural): Pattern {.inline.} =
+  ## Constructs a pattern that matches the ``nil`` string if exactly ``count``
   ## characters have already been matched, and otherwise fails.
-  return Pattern(stk: 0, p: newPE(pcPosNat, 1, EOP, Count))
+  return Pattern(stk: 0, p: newPE(pcPosNat, 1, EOP, count))
 
-proc Pos*(Count: NaturalFunc): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcPosNF, 1, EOP, Count))
+proc Pos*(count: NaturalFunc): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcPosNF, 1, EOP, count))
 
-proc Pos*(Count: ref Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcPosNR, 1, EOP, Count))
+proc Pos*(count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcPosNR, 1, EOP, count))
 
-proc Pos*(Count: ptr Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcPosNP, 1, EOP, Count))
+proc Pos*(count: ptr Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcPosNP, 1, EOP, count))
 
 
 # Rem
@@ -2956,38 +2953,38 @@ proc Rem*: Pattern {.inline.} =
 # Rpos
 # ----
 
-proc Rpos*(Count: Natural): Pattern {.inline.} =
-  ## Constructs a pattern that matches the ``nil`` string if exactly ``Count``
+proc Rpos*(count: Natural): Pattern {.inline.} =
+  ## Constructs a pattern that matches the ``nil`` string if exactly ``count``
   ## characters remain to be matched in the string, and otherwise fails.
-  return Pattern(stk: 0, p: newPE(pcRPosNat, 1, EOP, Count))
+  return Pattern(stk: 0, p: newPE(pcRPosNat, 1, EOP, count))
 
-proc Rpos*(Count: NaturalFunc): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcRPosNF, 1, EOP, Count))
+proc Rpos*(count: NaturalFunc): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcRPosNF, 1, EOP, count))
 
-proc Rpos*(Count: ref Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcRPosNR, 1, EOP, Count))
+proc Rpos*(count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcRPosNR, 1, EOP, count))
 
-proc Rpos*(Count: ptr Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcRPosNP, 1, EOP, Count))
+proc Rpos*(count: ptr Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcRPosNP, 1, EOP, count))
 
 
 # Rtab
 # ----
 
-proc Rtab*(Count: Natural): Pattern {.inline.} =
+proc Rtab*(count: Natural): Pattern {.inline.} =
   ## Constructs a pattern that matches from the current location until exactly
-  ## Count characters remain to be matched in the string. The pattern fails if
-  ## fewer than Count characters remain to be matched.
-  return Pattern(stk: 0, p: newPE(pcRTabNat, 1, EOP, Count))
+  ## count characters remain to be matched in the string. The pattern fails if
+  ## fewer than count characters remain to be matched.
+  return Pattern(stk: 0, p: newPE(pcRTabNat, 1, EOP, count))
 
-proc Rtab*(Count: NaturalFunc): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcRTabNF, 1, EOP, Count))
+proc Rtab*(count: NaturalFunc): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcRTabNF, 1, EOP, count))
 
-proc Rtab*(Count: ref Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcRTabNR, 1, EOP, Count))
+proc Rtab*(count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcRTabNR, 1, EOP, count))
 
-proc Rtab*(Count: ptr Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcRTabNP, 1, EOP, Count))
+proc Rtab*(count: ptr Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcRTabNP, 1, EOP, count))
 
 
 # Setcur
@@ -3045,24 +3042,24 @@ proc Succeed*(): Pattern {.inline.} =
 # Tab
 # ---
 
-proc Tab*(Count: Natural): Pattern {.inline.} =
-  ## Constructs a pattern that from the current location until ``Count``
-  ## characters have been matched. The pattern fails if more than ``Count``
+proc Tab*(count: Natural): Pattern {.inline.} =
+  ## Constructs a pattern that from the current location until ``count``
+  ## characters have been matched. The pattern fails if more than ``count``
   ## characters have already been matched.
-  return Pattern(stk: 0, p: newPE(pcTabNat, 1, EOP, Count))
+  return Pattern(stk: 0, p: newPE(pcTabNat, 1, EOP, count))
 
-proc Tab*(Count: NaturalFunc): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcTabNF, 1, EOP, Count))
+proc Tab*(count: NaturalFunc): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcTabNF, 1, EOP, count))
 
-proc Tab*(Count: ref Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcTabNR, 1, EOP, Count))
+proc Tab*(count: ref Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcTabNR, 1, EOP, count))
 
-proc Tab*(Count: ptr Natural): Pattern {.inline.} =
-  return Pattern(stk: 0, p: newPE(pcTabNP, 1, EOP, Count))
+proc Tab*(count: ptr Natural): Pattern {.inline.} =
+  return Pattern(stk: 0, p: newPE(pcTabNP, 1, EOP, count))
 
 
-# Image
-# -----
+# ``$``, image
+# ------------
 
 proc deleteAmpersand(result: var String) =
    let l = result.len
@@ -5071,9 +5068,9 @@ when isMainModule:
   import strutils
 
   const
-    LowerLetters = {'a'..'z'}
-    UpperLetters = {'A'..'Z'}
-    LettersDigits = Letters + Digits
+    # LowerLetters = {'a'..'z'}
+    # UpperLetters = {'A'..'Z'}
+    # LettersDigits = Letters + Digits
     Punctuation = {'\33'..'\47', '\58'..'\64', '\91'..'\96', '\123'..'\126'}
 
   let hello = "Hello"
