@@ -2,8 +2,8 @@
 ##
 ## This module is a translation of the GNAT.Spitbol Ada library to Nim
 ##
-## Copyright (C) 1997-2013, AdaCore
 ## Copyright (C) 2015, H. G. Weller
+## Copyright (C) 1997-2013, AdaCore
 ##
 ## Nimbol is free software;  you can  redistribute it  and/or modify it under
 ## terms of the  GNU General Public License as published  by the Free Soft-
