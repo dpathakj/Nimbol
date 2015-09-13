@@ -713,7 +713,7 @@ type
     ## pattern element is matched to obtain the currently referenced string
     ## value.
 
-  PatternCode = enum
+  PatCode = enum
     pcArbY,
     pcAssign,
     pcBreakXX,
@@ -832,7 +832,7 @@ type
     open, close: Character
 
   PE = object
-    case pCode: PatternCode
+    case pCode: PatCode
     of pcArbY..pcUnanchored: nil
     of pcAlt..pcArbnoX: alt: ref PE
     of pcRpat: patRef: ref Pattern
@@ -967,7 +967,7 @@ const pcHasAlt = pcAlt..pcArbnoX ## \
   ## Range of pattern codes that has an Alt field. This is used in the
   ## recursive traversals, since these links must be followed.
 
-proc newPE(pCode: PatternCode; index: Natural; pThen: ref PE): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE): ref PE =
   new(result)
   result[] = PE(pCode: pCode, index: index, pThen: pThen)
 
@@ -977,7 +977,7 @@ let EOP = newPE(pcEOP, 0, nil) ## \
   ## inside a pattern. Furthermore it does not need a successor, since it
   ## marks the end of the pattern, so that no more successors are needed.
 
-const okForSimpleArbno: array[PatternCode, bool] =
+const okForSimpleArbno: array[PatCode, bool] =
   [
     pcArbY: false,
     pcAssign: false,
@@ -1941,88 +1941,58 @@ proc buildPtrArray(e: ref PE): PtrArray =
   RecordPE(e, result)
   debugNewLine()
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    vr: ref String): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; vr: ref String):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.vr = vr
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    vp: ptr String): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; vp: ptr String):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.vp = vp
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    fileRef: ref File): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; fileRef: ref File):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.fileRef = fileRef
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    filePtr: ptr File): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; filePtr: ptr File):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.filePtr = filePtr
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    patPtr: ptr Pattern): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; patPtr: ptr Pattern):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.patPtr = patPtr
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    patRef: ref Pattern): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; patRef: ref Pattern):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.patRef = patRef
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    boolFunc: BoolFunc): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; boolFunc: BoolFunc):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.boolFunc = boolFunc
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    vf: StringFunc): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; vf: StringFunc):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.vf = vf
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    es: CharacterSet): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; es: CharacterSet):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.es = es
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    elem: Character): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; elem: Character):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.elem = elem
 
 proc newPE(
-    pCode: PatternCode;
+    pCode: PatCode;
     index: Natural;
     pThen: ref PE;
     open, close: Character): ref PE =
@@ -2030,35 +2000,23 @@ proc newPE(
   result.bal.open = open
   result.bal.close = close
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    alt: ref PE): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; alt: ref PE):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.alt = alt
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    nat: Natural): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; nat: Natural):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.nat = nat
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    nf: NaturalFunc): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; nf: NaturalFunc):
+    ref PE =
   result = newPE(pCode, index, pThen)
   result.nf = nf
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    str: PString): ref PE =
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; str: PString):
+    ref PE =
   result = newPE(pCode, index, pThen)
   case pCode
   of pcString2:
@@ -2080,37 +2038,28 @@ proc newPE(
     result.str = str
   else: discard
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    nr: ref Natural): ref PE {.inline.} =
-    result = newPE(pCode, index, pThen)
-    result.nr = nr
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; nr: ref Natural):
+    ref PE {.inline.} =
+  result = newPE(pCode, index, pThen)
+  result.nr = nr
 
-proc newPE(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    np: ptr Natural): ref PE {.inline.} =
-    result = newPE(pCode, index, pThen)
-    result.np = np
+proc newPE(pCode: PatCode; index: Natural; pThen: ref PE; np: ptr Natural):
+    ref PE {.inline.} =
+  result = newPE(pCode, index, pThen)
+  result.np = np
 
-proc newPEVal(
-    pCode: PatternCode;
-    index: Natural;
-    pThen: ref PE;
-    val: ref Natural): ref PE {.inline.} =
-    result = newPE(pCode, index, pThen)
-    result.val = val
+proc newPEVal(pCode: PatCode; index: Natural; pThen: ref PE; val: ref Natural):
+    ref PE {.inline.} =
+  result = newPE(pCode, index, pThen)
+  result.val = val
 
 proc newPEValPtr(
-    pCode: PatternCode;
+    pCode: PatCode;
     index: Natural;
     pThen: ref PE;
     valPtr: ptr Natural): ref PE {.inline.} =
-    result = newPE(pCode, index, pThen)
-    result.valPtr = valPtr
+  result = newPE(pCode, index, pThen)
+  result.valPtr = valPtr
 
 proc toPE(c: PChar): ref PE {.inline.} =
   ## Given a character, constructs a pattern element that matches
@@ -5529,10 +5478,12 @@ when isMainModule:
     let subject3 = "arkansas"
 
     let p1 = Rtab(2) & Len(1) & "a"
+    let p2 = "a" & Rtab(2)
 
     assert match(subject1, p1) == true
     assert match(subject2, p1) == true
     assert match(subject3, p1) == false
+    assert match(subject1, p2) == true
 
   # Span
   block:
