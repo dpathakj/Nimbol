@@ -1496,15 +1496,15 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   <li><a class="reference" href="#match,String,PString"
     title="match(subject: String; pat: PString): bool"><wbr />match</a></li>
   <li><a class="reference" href="#match,String,Pattern,String"
-    title="match(subject: var String; pat: Pattern; Replace: String): bool"><wbr />match</a></li>
+    title="match(subject: var String; pat: Pattern; replace: String): bool"><wbr />match</a></li>
   <li><a class="reference" href="#match,String,PString,String"
-    title="match(subject: var String; pat: PString; Replace: String): bool"><wbr />match</a></li>
+    title="match(subject: var String; pat: PString; replace: String): bool"><wbr />match</a></li>
   <li><a class="reference" href="#match,String,PString,String_2"
-    title="match(subject: var String; pat: PString; Replace: String)"><wbr />match</a></li>
+    title="match(subject: var String; pat: PString; replace: String)"><wbr />match</a></li>
   <li><a class="reference" href="#match,String,Pattern,MatchResult"
     title="match(subject: var String; pat: Pattern; res: var MatchResult): bool"><wbr />match</a></li>
-  <li><a class="reference" href="#Replace,MatchResult,String"
-    title="Replace(result: var MatchResult; Replace: String)"><wbr />Replace</a></li>
+  <li><a class="reference" href="#replace,MatchResult,String"
+    title="replace(result: var MatchResult; replace: String)"><wbr />replace</a></li>
 
   </ul>
 </li>
@@ -1633,12 +1633,12 @@ ab . cde . ij</pre>
 <h2><a class="toc-backref" id="pattern-matching-tutorial-deferred-replacement" href="#pattern-matching-tutorial-deferred-replacement">Deferred Replacement</a></h2><p>The simple model given for pattern replacement (where the matched sub-string is replaced by the string given as the third argument to match) works fine in simple cases, but this approach does not work in the case where the expression used as the replacement string is dependent on values set by the match.</p>
 <p>For example, suppose we want to find an instance of a parenthesized character, and replace the parentheses with square brackets. At first glance it would seem that::</p>
 <pre class = "listing"><span class="Identifier">match</span><span class="Punctuation">(</span><span class="Identifier">subject</span><span class="Punctuation">,</span> <span class="CharLit">'('</span> <span class="Operator">&amp;</span> <span class="Identifier">Len</span><span class="Punctuation">(</span><span class="DecNumber">1</span><span class="Punctuation">)</span> <span class="Operator">*</span> <span class="Identifier">c</span> <span class="Operator">&amp;</span> <span class="CharLit">')'</span><span class="Punctuation">,</span> <span class="CharLit">'['</span> <span class="Operator">&amp;</span> <span class="Identifier">c</span> <span class="Operator">&amp;</span> <span class="CharLit">']'</span><span class="Punctuation">)</span></pre><p>would do the trick, but that does not work, because the third argument to match gets evaluated too early, before the call to match, and before the pattern match has had a chance to set <tt class="docutils literal"><span class="pre">c</span></tt>.</p>
-<p>To solve this problem we provide the deferred replacement capability.  With this approach, which of course is only needed if the pattern involved has side effects, is to do the match in two stages. The call to match sets a pattern result in a variable of the private type MatchResult, and then a subsequent <tt class="docutils literal"><span class="pre">Replace</span></tt> operation uses this <tt class="docutils literal"><span class="pre">MatchResult</span></tt> object to perform the required replacement.</p>
+<p>To solve this problem we provide the deferred replacement capability.  With this approach, which of course is only needed if the pattern involved has side effects, is to do the match in two stages. The call to match sets a pattern result in a variable of the private type MatchResult, and then a subsequent <tt class="docutils literal"><span class="pre">replace</span></tt> operation uses this <tt class="docutils literal"><span class="pre">MatchResult</span></tt> object to perform the required replacement.</p>
 <p>Using this approach, we can now write the above operation properly in a manner that will work::</p>
 <pre class = "listing"><span class="Keyword">var</span> <span class="Identifier">m</span> <span class="Punctuation">:</span> <span class="Identifier">MatchResult</span>
 <span class="Operator">...</span>
 <span class="Identifier">match</span><span class="Punctuation">(</span><span class="Identifier">subject</span><span class="Punctuation">,</span> <span class="CharLit">'('</span> <span class="Operator">&amp;</span> <span class="Identifier">Len</span><span class="Punctuation">(</span><span class="DecNumber">1</span><span class="Punctuation">)</span> <span class="Operator">*</span> <span class="Identifier">c</span> <span class="Operator">&amp;</span> <span class="CharLit">')'</span><span class="Punctuation">,</span> <span class="Identifier">m</span><span class="Punctuation">)</span>
-<span class="Identifier">Replace</span><span class="Punctuation">(</span><span class="Identifier">m</span><span class="Punctuation">,</span> <span class="CharLit">'['</span> <span class="Operator">&amp;</span> <span class="Identifier">c</span> <span class="Operator">&amp;</span> <span class="CharLit">']'</span><span class="Punctuation">)</span></pre><p>As with other match cases, there is a function and function form of this match call. A call to <tt class="docutils literal"><span class="pre">Replace</span></tt> after a failed match has no effect. Note that subject should not be modified between the calls.</p>
+<span class="Identifier">replace</span><span class="Punctuation">(</span><span class="Identifier">m</span><span class="Punctuation">,</span> <span class="CharLit">'['</span> <span class="Operator">&amp;</span> <span class="Identifier">c</span> <span class="Operator">&amp;</span> <span class="CharLit">']'</span><span class="Punctuation">)</span></pre><p>As with other match cases, there is a function and function form of this match call. A call to <tt class="docutils literal"><span class="pre">replace</span></tt> after a failed match has no effect. Note that subject should not be modified between the calls.</p>
 
 <h2><a class="toc-backref" id="pattern-matching-tutorial-examples-of-pattern-matching" href="#pattern-matching-tutorial-examples-of-pattern-matching">Examples of Pattern Matching</a></h2><p>First a simple example of the use of pattern replacement to remove a line number from the start of a string. We assume that the line number has the form of a string of decimal digits followed by a period, followed by one or more spaces::</p>
 <pre class = "listing"><span class="Keyword">let</span> <span class="Identifier">digs</span> <span class="Operator">=</span> <span class="Identifier">Span</span><span class="Punctuation">(</span><span class="StringLit">&quot;0123456789&quot;</span><span class="Punctuation">)</span>
@@ -3172,28 +3172,28 @@ class="link-seesrc" target="_blank">Source</a>
 href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L4988"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
-<dt id="match"><a name="match,String,Pattern,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">Replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
+<dt id="match"><a name="match,String,Pattern,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
     <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">WriteIOEffect</span><span class="Other">,</span> <span class="Identifier">RootEffect</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
-The subject is matched against the pattern.  Any immediate or deferred assignments or writes are executed, and the returned value indicates whether or not the match succeeded.  If the match succeeds, then the matched part of the subject string is replaced by the given Replace string.
+The <tt class="docutils literal"><span class="pre">subject</span></tt> is matched against the pattern.  Any immediate or deferred assignments or writes are executed, and the returned value indicates whether or not the match succeeded.  If the match succeeds, then the matched part of the <tt class="docutils literal"><span class="pre">subject</span></tt> string is replaced by the given <tt class="docutils literal"><span class="pre">replace</span></tt> string.
 &nbsp;&nbsp;<a
 href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5006"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
-<dt id="match"><a name="match,String,PString,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">Replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
+<dt id="match"><a name="match,String,PString,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
     <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">WriteIOEffect</span><span class="Other">,</span> <span class="Identifier">RootEffect</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5019"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5020"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
-<dt id="match"><a name="match,String,PString,String_2"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">Replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span> <span class="Other">{.</span>
+<dt id="match"><a name="match,String,PString,String_2"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span> <span class="Other">{.</span>
     <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">WriteIOEffect</span><span class="Other">,</span> <span class="Identifier">RootEffect</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5028"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5029"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,Pattern,MatchResult"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">res</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">MatchResult</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
@@ -3201,14 +3201,14 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5041"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5042"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
-<dt id="Replace"><a name="Replace,MatchResult,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Replace</span><span class="Other">(</span><span class="Identifier">result</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">MatchResult</span><span class="Other">;</span> <span class="Identifier">Replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
+<dt id="replace"><a name="replace,MatchResult,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">replace</span><span class="Other">(</span><span class="Identifier">result</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">MatchResult</span><span class="Other">;</span> <span class="Identifier">replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Given a previous call to match which set result, performs a pattern replacement if the match was successful. Has no effect if the match failed. This call should immediately follow the match call.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5057"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5058"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 
@@ -3221,7 +3221,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-09-13 13:50:20 UTC</small>
+        <small>Made with Nim. Generated: 2015-09-13 13:53:09 UTC</small>
       </div>
     </div>
   </div>
