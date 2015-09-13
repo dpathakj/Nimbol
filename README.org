@@ -13,7 +13,7 @@ patterm matching package based on the pattern language of =SNOBOL4= modeled on
 context free grammars, with context sensitive extensions that provide full
 (type 0) computational capabilities.
 
-* [[http://henry.github.com/Nimbol/COPYING3][Copyright]] [[http://henry.github.com/Nimbol/COPYING_RUNTIME][Runtime Excetpion]]
+* [[http://henry.github.com/Nimbol/COPYING3][Copyright]] [[http://henry.github.com/Nimbol/COPYING.RUNTIME][Runtime Excetpion]]
   + Copyright (C) 2015, H. G. Weller
   + Copyright (C) 1997-2013, AdaCore
 
