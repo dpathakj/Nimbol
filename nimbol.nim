@@ -1222,7 +1222,7 @@ type StackEntry = object
 ## recursive match. This is saved so that the successor field of this node is
 ## accessible at the end of the match, but it is never popped and executed.
 ##
-## The second entry corresponds to a standard new region action. A pcRRemove
+## The second entry corresponds to a standard new region action. A ``pcRRemove``
 ## node is stacked, whose cursor field is used to store the outer stack base,
 ## and the stack base is reset to point to this ``pcRRemove`` node. Then the
 ## recursive pattern is matched and it can make history stack entries in the
@@ -1456,11 +1456,11 @@ type StackEntry = object
 ##   | y |---->
 ##   +---+
 ##
-## The x node is a pcArbX node, which matches nil, and stacks a
-## pointer to y node, which is the pcArbY node that matches one
+## The x node is a ``pcArbX`` node, which matches nil, and stacks a
+## pointer to y node, which is the ``pcArbY`` node that matches one
 ## extra character and restacks itself.
 ##
-## The pcArbX node is numbered 2, and the pcArbY node is 1
+## The ``pcArbX`` node is numbered 2, and the ``pcArbY`` node is 1
 ##
 ## Arbno (simple case)
 ## -------------------
@@ -1507,17 +1507,17 @@ type StackEntry = object
 ##   |  | e |---->| p |---->| y |--->+
 ##   |  +---+     +---+     +---+
 ##
-## The node ``x`` (pcArbnoX) matches ``nil``, stacking a pointer to the
+## The node ``x`` (``pcArbnoX``) matches ``nil``, stacking a pointer to the
 ## ``e-p-x`` structure used to match one Arbno instance.
 ##
-## Here ``e`` is the pcREnter node which matches ``nil`` and creates two
-## stack entries. The first is a special entry whose node field is
-## not used at all, and whose cursor field has the initial cursor.
+## Here ``e`` is the ``pcREnter`` node which matches ``nil`` and creates two
+## stack entries. The first is a special entry whose node field is not used at
+## all, and whose cursor field has the initial cursor.
 ##
 ## The second entry corresponds to a standard new region action. A
-## pcRRemove node is stacked, whose cursor field is used to store
+## ``pcRRemove`` node is stacked, whose cursor field is used to store
 ## the outer stack base, and the stack base is reset to point to
-## this pcRRemove node. Then the pattern ``p`` is matched, and it can
+## this ``pcRRemove`` node. Then the pattern ``p`` is matched, and it can
 ## make history stack entries in the normal manner, so now the stack
 ## looks like::
 ##
@@ -1531,14 +1531,14 @@ type StackEntry = object
 ##
 ##    (stack entries made by matching p)
 ##
-## If the match of ``p`` fails, then the pcRRemove entry is popped and
+## If the match of ``p`` fails, then the ``pcRRemove`` entry is popped and
 ## it removes both itself and the special entry underneath it,
 ## restores the outer stack base, and signals failure.
 ##
-## If the match of ``p`` succeeds, then node ``y``, the pcArbnoY node, pops
+## If the match of ``p`` succeeds, then node ``y``, the ``pcArbnoY`` node, pops
 ## the inner region. There are two possibilities. If matching ``p`` left
 ## no stack entries, then all traces of the inner region can be removed.
-## If there are stack entries, then we push an pcRegionReplace stack
+## If there are stack entries, then we push an ``pcRegionReplace`` stack
 ## entry whose "cursor" value is the inner stack base value, and then
 ## restore the outer stack base value, so the stack looks like::
 ##
@@ -1570,7 +1570,7 @@ type StackEntry = object
 ## of the Arbno pattern. To make sure that multiple iterations do not
 ## overflow the stack, the Arbno node saves the stack count required
 ## by a single iteration, and the Concat function increments this to
-## include stack entries required by any successor. The pcArbnoY
+## include stack entries required by any successor. The ``pcArbnoY``
 ## node uses this count to ensure that sufficient stack remains
 ## before proceeding after matching each new instance.
 ##
@@ -1587,14 +1587,14 @@ type StackEntry = object
 ##   | e |---->| p |---->| a |---->
 ##   +---+     +---+     +---+
 ##
-## Here ``e`` is the pcREnter node which matches ``nil`` and creates two
+## Here ``e`` is the ``pcREnter`` node which matches ``nil`` and creates two
 ## stack entries. The first is a special entry whose node field is
 ## not used at all, and whose cursor field has the initial cursor.
 ##
 ## The second entry corresponds to a standard new region action. A
-## pcRRemove node is stacked, whose cursor field is used to store
+## ``pcRRemove`` node is stacked, whose cursor field is used to store
 ## the outer stack base, and the stack base is reset to point to
-## this pcRRemove node. Then the pattern ``p`` is matched, and it can
+## this ``pcRRemove`` node. Then the pattern ``p`` is matched, and it can
 ## make history stack entries in the normal manner, so now the stack
 ## looks like::
 ##
@@ -1608,17 +1608,17 @@ type StackEntry = object
 ##
 ##    (stack entries made by matching p)
 ##
-## If the match of ``p`` fails, then the pcRRemove entry is popped
+## If the match of ``p`` fails, then the ``pcRRemove`` entry is popped
 ## and it removes both itself and the special entry underneath it,
 ## restores the outer stack base, and signals failure.
 ##
 ## If the match of ``p`` succeeds, then node ``a``, which is the actual
-## pcAssignImmP node, executes the assignment (using the stack
+## ``pcAssignImm`` node, executes the assignment (using the stack
 ## base to locate the entry with the saved starting cursor value),
 ## and the pops the inner region. There are two possibilities, if
 ## matching ``p`` left no stack entries, then all traces of the inner
 ## region can be removed. If there are stack entries, then we push
-## an pcRegionReplace stack entry whose "cursor" value is the
+## an ``pcRegionReplace`` stack entry whose "cursor" value is the
 ## inner stack base value, and then restore the outer stack base
 ## value, so the stack looks like::
 ##
@@ -1633,9 +1633,9 @@ type StackEntry = object
 ##    (stack entries made by matching p)
 ##
 ##    (pcRegionReplace entry, "cursor" value is the stack pointer value
-##     referencing the pcRRemove entry).
+##     referencing the ``pcRRemove`` entry).
 ##
-## If a subsequent failure occurs, the pcRegionReplace node restores
+## If a subsequent failure occurs, the ``pcRegionReplace`` node restores
 ## the inner stack base value and signals failure to explore rematches
 ## of the pattern ``p``.
 ##
@@ -1656,8 +1656,8 @@ type StackEntry = object
 ## The operation of this pattern is identical to that described above
 ## for deferred assignment, up to the point where ``p`` has been matched.
 ##
-## The ``a`` node, which is the pcAssignOnMP node first pushes a
-## pcAssign node onto the history stack. This node saves the ending
+## The ``a`` node, which is the ``pcAssignOnM`` node first pushes a
+## ``pcAssign`` node onto the history stack. This node saves the ending
 ## cursor and acts as a flag for the final assignment, as further
 ## described below.
 ##
@@ -1666,10 +1666,10 @@ type StackEntry = object
 ## of the variable to be assigned at the end of the pattern.
 ##
 ## After that the inner region is terminated in the usual manner,
-## by stacking a pcRRemore entry as described for the assign
+## by stacking a ``pcRRemore`` entry as described for the assign
 ## immediate case. Note that the optimization of completely
 ## removing the inner region does not happen in this case, since
-## we have at least one stack entry (the pcAssign one we just made).
+## we have at least one stack entry (the ``pcAssign`` one we just made).
 ## The stack now looks like::
 ##
 ##    (stack entries made before assign pattern)
@@ -1688,19 +1688,19 @@ type StackEntry = object
 ##    (pcRegionReplace entry, "cursor" value is stack pointer value referencing
 ##     the pcRRemove entry).
 ##
-## If a subsequent failure causes the pcAssign node to execute it
+## If a subsequent failure causes the ``pcAssign`` node to execute it
 ## simply removes itself and propagates the failure.
 ##
 ## If the match succeeds, then the history stack is scanned for
-## pcAssign nodes, and the assignments are executed (examination
+## ``pcAssign`` nodes, and the assignments are executed (examination
 ## of the above diagram will show that all the necessary data is
 ## at hand for the assignment).
 ##
 ## To optimize the common case where no assign-on-match operations
 ## are present, a global flag AssignOnM is maintained which is
 ## initialize to False, and gets set true as part of the execution
-## of the pcAssignOnMP node. The scan of the history stack for
-## pcAssign entries is done only if this flag is set.
+## of the ``pcAssignOnM`` node. The scan of the history stack for
+## ``pcAssign`` entries is done only if this flag is set.
 ##
 ## The node numbering of the constituent pattern ``p`` is not affected.  Where
 ## ``n`` is the number of nodes in p, the ``a`` node is numbered ``n + 1``, and
@@ -1715,7 +1715,7 @@ type StackEntry = object
 ##   | b |---->
 ##   +---+
 ##
-## The node ``b`` is the pcBal node which matches a parentheses balanced
+## The node ``b`` is the ``pcBal`` node which matches a parentheses balanced
 ## string, starting at the current cursor position. It then updates
 ## the cursor past this matched string, and stacks a pointer to itself
 ## with this updated cursor value on the history stack, to extend the
@@ -1738,9 +1738,9 @@ type StackEntry = object
 ##     +<------| x |
 ##             +---+
 ##
-## Here the ``b`` node is the BreakXxx node that performs a normal Break
-## function. The ``a`` node is an alternative (pcAlt) node that matches
-## nil, but stacks a pointer to node x (the pcBreakXX node) which
+## Here the ``b`` node is the ``BreakXxx`` node that performs a normal Break
+## function. The ``a`` node is an alternative (``pcAlt``) node that matches
+## nil, but stacks a pointer to node x (the ``pcBreakXX`` node) which
 ## extends the match one character (to eat up the previously detected
 ## break character), and then rematches the break.
 ##
@@ -1756,8 +1756,8 @@ type StackEntry = object
 ##   | f |---->
 ##   +---+
 ##
-## The element ``f``, pcFence, matches ``nil``, and stacks a pointer to a
-## pcAbort element which will abort the match on a subsequent failure.
+## The element ``f``, ``pcFence``, matches ``nil``, and stacks a pointer to a
+## ``pcAbort`` element which will abort the match on a subsequent failure.
 ##
 ## Since this is a single element it is numbered 1 (the reason we
 ## include it in the compound patterns section is that it backtracks).
@@ -1771,15 +1771,15 @@ type StackEntry = object
 ##   | e |---->| p |---->| x |---->
 ##   +---+     +---+     +---+
 ##
-## Here ``e`` is the pcREnter node which matches ``nil`` and creates two
+## Here ``e`` is the ``pcREnter`` node which matches ``nil`` and creates two
 ## stack entries. The first is a special entry which is not used at
 ## all in the fence case (it is present merely for uniformity with
 ## other cases of region enter operations).
 ##
 ## The second entry corresponds to a standard new region action. A
-## pcRRemove node is stacked, whose cursor field is used to store
+## ``pcRRemove`` node is stacked, whose cursor field is used to store
 ## the outer stack base, and the stack base is reset to point to
-## this pcRRemove node. Then the pattern ``p`` is matched, and it can
+## this ``pcRRemove`` node. Then the pattern ``p`` is matched, and it can
 ## make history stack entries in the normal manner, so now the stack
 ## looks like::
 ##
@@ -1792,21 +1792,20 @@ type StackEntry = object
 ##
 ##    (stack entries made by matching p)
 ##
-## If the match of ``p`` fails, then the pcRRemove entry is popped
+## If the match of ``p`` fails, then the ``pcRRemove`` entry is popped
 ## and it removes both itself and the special entry underneath it,
 ## restores the outer stack base, and signals failure.
 ##
-## If the match of ``p`` succeeds, then node ``x``, the pcFenceX node, gets
-## control. One might be tempted to think that at this point, the
-## history stack entries made by matching ``p`` can just be removed since
-## they certainly are not going to be used for rematching (that is
-## whole point of Fence after all). However, this is wrong, because
-## it would result in the loss of possible assign-on-match entries
-## for deferred pattern assignments.
+## If the match of ``p`` succeeds, then node ``x``, the ``pcFenceX`` node, gets
+## control. One might be tempted to think that at this point, the history stack
+## entries made by matching ``p`` can just be removed since they certainly are
+## not going to be used for rematching (that is whole point of Fence after
+## all). However, this is wrong, because it would result in the loss of possible
+## assign-on-match entries for deferred pattern assignments.
 ##
 ## Instead what we do is to make a special entry whose node references
-## pcFenceY, and whose cursor saves the inner stack base value, i.e.
-## the pointer to the pcRRemove entry. Then the outer stack base
+## ``pcFenceY``, and whose cursor saves the inner stack base value, i.e.
+## the pointer to the ``pcRRemove`` entry. Then the outer stack base
 ## pointer is restored, so the stack looks like::
 ##
 ##    (stack entries made before assign pattern)
@@ -1821,7 +1820,7 @@ type StackEntry = object
 ##    (pcFenceY entry, "cursor" value is stack pointer value referencing the
 ##     pcRRemove entry).
 ##
-## If a subsequent failure occurs, then the pcFenceY entry removes
+## If a subsequent failure occurs, then the ``pcFenceY`` entry removes
 ## the entire inner region, including all entries made by matching p,
 ## and alternatives prior to the Fence pattern are sought.
 ##
@@ -1838,7 +1837,7 @@ type StackEntry = object
 ##   | s |---->
 ##   +---+
 ##
-## The node S is the pcSucceed node which matches nil, and stacks
+## The node S is the ``pcSucceed`` node which matches nil, and stacks
 ## a pointer to itself on the history stack, so that a subsequent
 ## failure repeats the same match.
 ##
@@ -1855,7 +1854,7 @@ type StackEntry = object
 ##   | e |---->| p |---->| w |---->
 ##   +---+     +---+     +---+
 ##
-## Here ``e`` is the pcREnter node and ``w`` is the pcWriteImmP node. The
+## Here ``e`` is the ``pcREnter`` node and ``w`` is the ``pcWriteImm`` node. The
 ## handling is identical to that described above for Assign Immediate,
 ## except that at the point where a successful match occurs, the matched
 ## substring is written to the referenced file.
@@ -1874,7 +1873,7 @@ type StackEntry = object
 ##   | e |---->| p |---->| w |---->
 ##   +---+     +---+     +---+
 ##
-## Here ``e`` is the pcREnter node and ``W`` is the pcWriteOnMP node. The
+## Here ``e`` is the ``pcREnter`` node and ``W`` is the ``pcWriteOnM`` node. The
 ## handling is identical to that described above for Assign On Match,
 ## except that at the point where a successful match has completed,
 ## the matched substring is written to the referenced file.
