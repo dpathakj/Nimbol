@@ -2156,7 +2156,7 @@ proc `$`(np: ptr Natural): string =
   return "NP(" & $cast[int](np) & ')'
 
 proc `$`(pr: ref Pattern): string =
-  return "patPtr(" & $cast[int](pr) & ')'
+  return "patRef(" & $cast[int](pr) & ')'
 
 proc `$`(pp: ptr Pattern): string =
   return "patPtr(" & $cast[int](pp) & ')'
@@ -2321,26 +2321,35 @@ proc Concat(l, r: ref PE; Incr: Natural): ref PE =
     return l
 
 
-# Pattern concatenation. Matches l followed by r
-# ----------------------------------------------
-proc `&`*(l: PString; r: Pattern): Pattern {.inline.} =
-  Pattern(stk: r.stk, p: Concat(toPE(l), copy(r.p), r.stk))
+# Pattern concatenation operators
+# -------------------------------
+
+proc `&`*(l: Pattern; r: Pattern): Pattern {.inline.} =
+  ## Pattern concatenation, matches ``l`` followed by ``r``
+  Pattern(stk: l.stk + r.stk, p: Concat(copy(l.p), copy(r.p), r.stk))
 
 proc `&`*(l: Pattern; r: PString): Pattern {.inline.} =
   Pattern(stk: l.stk, p: Concat(copy(l.p), toPE(r), 0))
 
-proc `&`*(l: PChar; r: Pattern): Pattern {.inline.} =
+proc `&`*(l: PString; r: Pattern): Pattern {.inline.} =
   Pattern(stk: r.stk, p: Concat(toPE(l), copy(r.p), r.stk))
 
 proc `&`*(l: Pattern; r: PChar): Pattern {.inline.} =
   Pattern(stk: l.stk, p: Concat(copy(l.p), toPE(r), 0))
 
-proc `&`*(l: Pattern; r: Pattern): Pattern {.inline.} =
-  Pattern(stk: l.stk + r.stk, p: Concat(copy(l.p), copy(r.p), r.stk))
+proc `&`*(l: PChar; r: Pattern): Pattern {.inline.} =
+  Pattern(stk: r.stk, p: Concat(toPE(l), copy(r.p), r.stk))
 
 proc `&=`*(l: var Pattern; r: Pattern) {.inline.} =
+  ## Pattern concatenation accumulation, matches ``l`` followed by ``r``
   l.stk += r.stk
   l.p = Concat(l.p, copy(r.p), r.stk)
+
+proc `&=`*(l: var Pattern; r: PString): Pattern {.inline.} =
+  l.p = Concat(l.p, toPE(r), 0)
+
+proc `&=`*(l: var Pattern; r: PChar): Pattern {.inline.} =
+  l.p = Concat(l.p, toPE(r), 0)
 
 
 # Pattern Assignment Functions
