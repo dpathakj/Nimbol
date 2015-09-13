@@ -1786,7 +1786,7 @@ Note: the data structures and general approach used in this implementation are d
 <h1><a class="toc-backref" id="recursive-pattern-matches" href="#recursive-pattern-matches">Recursive Pattern Matches</a></h1><p>The pattern primitive <tt class="docutils literal"><span class="pre">(+p)</span></tt> where <tt class="docutils literal"><span class="pre">p</span></tt> is a <tt class="docutils literal"><span class="pre">ptr Pattern</span></tt> or <tt class="docutils literal"><span class="pre">PatternFunc</span></tt> causes a recursive pattern match. This cannot be handled by an actual recursive call to the outer level match routine, since this would not allow for possible backtracking into the region matched by the inner pattern. Indeed this is the classical clash between recursion and backtracking, and a simple recursive stack structure does not suffice.</p>
 <p>This section describes how this recursion and the possible associated backtracking is handled. We still use a single stack, but we establish the concept of nested regions on this stack, each of which has a stack base value pointing to the deepest stack entry of the region. The base value for the outer level is zero.</p>
 <p>When a recursive match is established, two special stack entries are made. The first entry is used to save the original node that starts the recursive match. This is saved so that the successor field of this node is accessible at the end of the match, but it is never popped and executed.</p>
-<p>The second entry corresponds to a standard new region action. A pcRRemove node is stacked, whose cursor field is used to store the outer stack base, and the stack base is reset to point to this <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> node. Then the recursive pattern is matched and it can make history stack entries in the normal matter, so now the stack looks like:<pre>
+<p>The second entry corresponds to a standard new region action. A <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> node is stacked, whose cursor field is used to store the outer stack base, and the stack base is reset to point to this <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> node. Then the recursive pattern is matched and it can make history stack entries in the normal matter, so now the stack looks like:<pre>
 (stack entries made by outer level)
 
 (Special entry, node is (+p) successor, cursor entry is not used)
@@ -1890,8 +1890,8 @@ I 4 I------------&gt;+
 | y |----&gt;
 +---+</pre>
 </p>
-<p>The x node is a pcArbX node, which matches nil, and stacks a pointer to y node, which is the pcArbY node that matches one extra character and restacks itself.</p>
-<p>The pcArbX node is numbered 2, and the pcArbY node is 1</p>
+<p>The x node is a <tt class="docutils literal"><span class="pre">pcArbX</span></tt> node, which matches nil, and stacks a pointer to y node, which is the <tt class="docutils literal"><span class="pre">pcArbY</span></tt> node that matches one extra character and restacks itself.</p>
+<p>The <tt class="docutils literal"><span class="pre">pcArbX</span></tt> node is numbered 2, and the <tt class="docutils literal"><span class="pre">pcArbY</span></tt> node is 1</p>
 
 <h1><a class="toc-backref" id="arbno-simple-case" href="#arbno-simple-case">Arbno (simple case)</a></h1><p>The simple form of Arbno can be used where the pattern always matches at least one character if it succeeds, and it is known not to make any history stack entries. In this case, Arbno(p) can construct the following structure:<pre>
 |    +-------------+
@@ -1922,9 +1922,9 @@ I 4 I------------&gt;+
 |  | e |----&gt;| p |----&gt;| y |---&gt;+
 |  +---+     +---+     +---+</pre>
 </p>
-<p>The node <tt class="docutils literal"><span class="pre">x</span></tt> (pcArbnoX) matches <tt class="docutils literal"><span class="pre">nil</span></tt>, stacking a pointer to the <tt class="docutils literal"><span class="pre">e-p-x</span></tt> structure used to match one Arbno instance.</p>
-<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the pcREnter node which matches <tt class="docutils literal"><span class="pre">nil</span></tt> and creates two stack entries. The first is a special entry whose node field is not used at all, and whose cursor field has the initial cursor.</p>
-<p>The second entry corresponds to a standard new region action. A pcRRemove node is stacked, whose cursor field is used to store the outer stack base, and the stack base is reset to point to this pcRRemove node. Then the pattern <tt class="docutils literal"><span class="pre">p</span></tt> is matched, and it can make history stack entries in the normal manner, so now the stack looks like:<pre>
+<p>The node <tt class="docutils literal"><span class="pre">x</span></tt> (<tt class="docutils literal"><span class="pre">pcArbnoX</span></tt>) matches <tt class="docutils literal"><span class="pre">nil</span></tt>, stacking a pointer to the <tt class="docutils literal"><span class="pre">e-p-x</span></tt> structure used to match one Arbno instance.</p>
+<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the <tt class="docutils literal"><span class="pre">pcREnter</span></tt> node which matches <tt class="docutils literal"><span class="pre">nil</span></tt> and creates two stack entries. The first is a special entry whose node field is not used at all, and whose cursor field has the initial cursor.</p>
+<p>The second entry corresponds to a standard new region action. A <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> node is stacked, whose cursor field is used to store the outer stack base, and the stack base is reset to point to this <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> node. Then the pattern <tt class="docutils literal"><span class="pre">p</span></tt> is matched, and it can make history stack entries in the normal manner, so now the stack looks like:<pre>
 (stack entries made before assign pattern)
 
 (Special entry, node field not used,
@@ -1935,8 +1935,8 @@ I 4 I------------&gt;+
 
 (stack entries made by matching p)</pre>
 </p>
-<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> fails, then the pcRRemove entry is popped and it removes both itself and the special entry underneath it, restores the outer stack base, and signals failure.</p>
-<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> succeeds, then node <tt class="docutils literal"><span class="pre">y</span></tt>, the pcArbnoY node, pops the inner region. There are two possibilities. If matching <tt class="docutils literal"><span class="pre">p</span></tt> left no stack entries, then all traces of the inner region can be removed. If there are stack entries, then we push an pcRegionReplace stack entry whose &quot;cursor&quot; value is the inner stack base value, and then restore the outer stack base value, so the stack looks like:<pre>
+<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> fails, then the <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> entry is popped and it removes both itself and the special entry underneath it, restores the outer stack base, and signals failure.</p>
+<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> succeeds, then node <tt class="docutils literal"><span class="pre">y</span></tt>, the <tt class="docutils literal"><span class="pre">pcArbnoY</span></tt> node, pops the inner region. There are two possibilities. If matching <tt class="docutils literal"><span class="pre">p</span></tt> left no stack entries, then all traces of the inner region can be removed. If there are stack entries, then we push an <tt class="docutils literal"><span class="pre">pcRegionReplace</span></tt> stack entry whose &quot;cursor&quot; value is the inner stack base value, and then restore the outer stack base value, so the stack looks like:<pre>
 (stack entries made before assign pattern)
 
 (Special entry, node field not used,
@@ -1951,7 +1951,7 @@ I 4 I------------&gt;+
  the pcRRemove entry).</pre>
 </p>
 <p>Now that we have matched another instance of the Arbno pattern, we need to move to the successor. There are two cases. If the Arbno pattern matched nil, then there is no point in seeking alternatives, since we would just match a whole bunch of nils. In this case we look through the alternative node, and move directly to its successor (i.e. the successor of the Arbno pattern). If on the other hand a non-nil string was matched, we simply follow the successor to the alternative node, which sets up for another possible match of the Arbno pattern.</p>
-<p>As noted in the section on stack checking, the stack count (and hence the stack check) for a pattern includes only one iteration of the Arbno pattern. To make sure that multiple iterations do not overflow the stack, the Arbno node saves the stack count required by a single iteration, and the Concat function increments this to include stack entries required by any successor. The pcArbnoY node uses this count to ensure that sufficient stack remains before proceeding after matching each new instance.</p>
+<p>As noted in the section on stack checking, the stack count (and hence the stack check) for a pattern includes only one iteration of the Arbno pattern. To make sure that multiple iterations do not overflow the stack, the Arbno node saves the stack count required by a single iteration, and the Concat function increments this to include stack entries required by any successor. The <tt class="docutils literal"><span class="pre">pcArbnoY</span></tt> node uses this count to ensure that sufficient stack remains before proceeding after matching each new instance.</p>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in <tt class="docutils literal"><span class="pre">p</span></tt>, the <tt class="docutils literal"><span class="pre">y</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, the <tt class="docutils literal"><span class="pre">e</span></tt> node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>, and the <tt class="docutils literal"><span class="pre">x</span></tt> node is <tt class="docutils literal"><span class="pre">n + 3</span></tt>.</p>
 
 <h1><a class="toc-backref" id="assign-immediate" href="#assign-immediate">Assign Immediate</a></h1><p>Immediate assignment <tt class="docutils literal"><span class="pre">(p * V)</span></tt> constructs the following structure:<pre>
@@ -1959,8 +1959,8 @@ I 4 I------------&gt;+
 | e |----&gt;| p |----&gt;| a |----&gt;
 +---+     +---+     +---+</pre>
 </p>
-<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the pcREnter node which matches <tt class="docutils literal"><span class="pre">nil</span></tt> and creates two stack entries. The first is a special entry whose node field is not used at all, and whose cursor field has the initial cursor.</p>
-<p>The second entry corresponds to a standard new region action. A pcRRemove node is stacked, whose cursor field is used to store the outer stack base, and the stack base is reset to point to this pcRRemove node. Then the pattern <tt class="docutils literal"><span class="pre">p</span></tt> is matched, and it can make history stack entries in the normal manner, so now the stack looks like:<pre>
+<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the <tt class="docutils literal"><span class="pre">pcREnter</span></tt> node which matches <tt class="docutils literal"><span class="pre">nil</span></tt> and creates two stack entries. The first is a special entry whose node field is not used at all, and whose cursor field has the initial cursor.</p>
+<p>The second entry corresponds to a standard new region action. A <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> node is stacked, whose cursor field is used to store the outer stack base, and the stack base is reset to point to this <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> node. Then the pattern <tt class="docutils literal"><span class="pre">p</span></tt> is matched, and it can make history stack entries in the normal manner, so now the stack looks like:<pre>
 (stack entries made before assign pattern)
 
 (Special entry, node field not used,
@@ -1971,8 +1971,8 @@ I 4 I------------&gt;+
 
 (stack entries made by matching p)</pre>
 </p>
-<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> fails, then the pcRRemove entry is popped and it removes both itself and the special entry underneath it, restores the outer stack base, and signals failure.</p>
-<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> succeeds, then node <tt class="docutils literal"><span class="pre">a</span></tt>, which is the actual pcAssignImmP node, executes the assignment (using the stack base to locate the entry with the saved starting cursor value), and the pops the inner region. There are two possibilities, if matching <tt class="docutils literal"><span class="pre">p</span></tt> left no stack entries, then all traces of the inner region can be removed. If there are stack entries, then we push an pcRegionReplace stack entry whose &quot;cursor&quot; value is the inner stack base value, and then restore the outer stack base value, so the stack looks like:<pre>
+<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> fails, then the <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> entry is popped and it removes both itself and the special entry underneath it, restores the outer stack base, and signals failure.</p>
+<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> succeeds, then node <tt class="docutils literal"><span class="pre">a</span></tt>, which is the actual <tt class="docutils literal"><span class="pre">pcAssignImm</span></tt> node, executes the assignment (using the stack base to locate the entry with the saved starting cursor value), and the pops the inner region. There are two possibilities, if matching <tt class="docutils literal"><span class="pre">p</span></tt> left no stack entries, then all traces of the inner region can be removed. If there are stack entries, then we push an <tt class="docutils literal"><span class="pre">pcRegionReplace</span></tt> stack entry whose &quot;cursor&quot; value is the inner stack base value, and then restore the outer stack base value, so the stack looks like:<pre>
 (stack entries made before assign pattern)
 
 (Special entry, node field not used,
@@ -1984,9 +1984,9 @@ I 4 I------------&gt;+
 (stack entries made by matching p)
 
 (pcRegionReplace entry, &quot;cursor&quot; value is the stack pointer value
- referencing the pcRRemove entry).</pre>
+ referencing the ``pcRRemove`` entry).</pre>
 </p>
-<p>If a subsequent failure occurs, the pcRegionReplace node restores the inner stack base value and signals failure to explore rematches of the pattern <tt class="docutils literal"><span class="pre">p</span></tt>.</p>
+<p>If a subsequent failure occurs, the <tt class="docutils literal"><span class="pre">pcRegionReplace</span></tt> node restores the inner stack base value and signals failure to explore rematches of the pattern <tt class="docutils literal"><span class="pre">p</span></tt>.</p>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in p, the <tt class="docutils literal"><span class="pre">a</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the e node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 
 <h1><a class="toc-backref" id="assign-on-match" href="#assign-on-match">Assign On Match</a></h1><p>The assign on match (**) pattern is quite similar to the assign immediate pattern, except that the actual assignment has to be delayed. The following structure is constructed:<pre>
@@ -1995,9 +1995,9 @@ I 4 I------------&gt;+
 +---+     +---+     +---+</pre>
 </p>
 <p>The operation of this pattern is identical to that described above for deferred assignment, up to the point where <tt class="docutils literal"><span class="pre">p</span></tt> has been matched.</p>
-<p>The <tt class="docutils literal"><span class="pre">a</span></tt> node, which is the pcAssignOnMP node first pushes a pcAssign node onto the history stack. This node saves the ending cursor and acts as a flag for the final assignment, as further described below.</p>
+<p>The <tt class="docutils literal"><span class="pre">a</span></tt> node, which is the <tt class="docutils literal"><span class="pre">pcAssignOnM</span></tt> node first pushes a <tt class="docutils literal"><span class="pre">pcAssign</span></tt> node onto the history stack. This node saves the ending cursor and acts as a flag for the final assignment, as further described below.</p>
 <p>It then stores a pointer to itself in the special entry node field. This was otherwise unused, and is now used to retrieve the address of the variable to be assigned at the end of the pattern.</p>
-<p>After that the inner region is terminated in the usual manner, by stacking a pcRRemore entry as described for the assign immediate case. Note that the optimization of completely removing the inner region does not happen in this case, since we have at least one stack entry (the pcAssign one we just made). The stack now looks like:<pre>
+<p>After that the inner region is terminated in the usual manner, by stacking a <tt class="docutils literal"><span class="pre">pcRRemore</span></tt> entry as described for the assign immediate case. Note that the optimization of completely removing the inner region does not happen in this case, since we have at least one stack entry (the <tt class="docutils literal"><span class="pre">pcAssign</span></tt> one we just made). The stack now looks like:<pre>
 (stack entries made before assign pattern)
 
 (Special entry, node points to copy of
@@ -2014,9 +2014,9 @@ I 4 I------------&gt;+
 (pcRegionReplace entry, &quot;cursor&quot; value is stack pointer value referencing
  the pcRRemove entry).</pre>
 </p>
-<p>If a subsequent failure causes the pcAssign node to execute it simply removes itself and propagates the failure.</p>
-<p>If the match succeeds, then the history stack is scanned for pcAssign nodes, and the assignments are executed (examination of the above diagram will show that all the necessary data is at hand for the assignment).</p>
-<p>To optimize the common case where no assign-on-match operations are present, a global flag AssignOnM is maintained which is initialize to False, and gets set true as part of the execution of the pcAssignOnMP node. The scan of the history stack for pcAssign entries is done only if this flag is set.</p>
+<p>If a subsequent failure causes the <tt class="docutils literal"><span class="pre">pcAssign</span></tt> node to execute it simply removes itself and propagates the failure.</p>
+<p>If the match succeeds, then the history stack is scanned for <tt class="docutils literal"><span class="pre">pcAssign</span></tt> nodes, and the assignments are executed (examination of the above diagram will show that all the necessary data is at hand for the assignment).</p>
+<p>To optimize the common case where no assign-on-match operations are present, a global flag AssignOnM is maintained which is initialize to False, and gets set true as part of the execution of the <tt class="docutils literal"><span class="pre">pcAssignOnM</span></tt> node. The scan of the history stack for <tt class="docutils literal"><span class="pre">pcAssign</span></tt> entries is done only if this flag is set.</p>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in p, the <tt class="docutils literal"><span class="pre">a</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the e node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 <p>Bal ---</p>
 <p>Bal builds a single node:<pre>
@@ -2024,7 +2024,7 @@ I 4 I------------&gt;+
 | b |----&gt;
 +---+</pre>
 </p>
-<p>The node <tt class="docutils literal"><span class="pre">b</span></tt> is the pcBal node which matches a parentheses balanced string, starting at the current cursor position. It then updates the cursor past this matched string, and stacks a pointer to itself with this updated cursor value on the history stack, to extend the matched string on a subsequent failure.</p>
+<p>The node <tt class="docutils literal"><span class="pre">b</span></tt> is the <tt class="docutils literal"><span class="pre">pcBal</span></tt> node which matches a parentheses balanced string, starting at the current cursor position. It then updates the cursor past this matched string, and stacks a pointer to itself with this updated cursor value on the history stack, to extend the matched string on a subsequent failure.</p>
 <p>Since this is a single node it is numbered 1 (the reason we include it in the compound patterns section is that it backtracks).</p>
 
 <h1><a class="toc-backref" id="breakx" href="#breakx">BreakX</a></h1><p>BreakX builds the structure:<pre>
@@ -2037,7 +2037,7 @@ I 4 I------------&gt;+
   +&lt;------| x |
           +---+</pre>
 </p>
-<p>Here the <tt class="docutils literal"><span class="pre">b</span></tt> node is the BreakXxx node that performs a normal Break function. The <tt class="docutils literal"><span class="pre">a</span></tt> node is an alternative (pcAlt) node that matches nil, but stacks a pointer to node x (the pcBreakXX node) which extends the match one character (to eat up the previously detected break character), and then rematches the break.</p>
+<p>Here the <tt class="docutils literal"><span class="pre">b</span></tt> node is the <tt class="docutils literal"><span class="pre">BreakXxx</span></tt> node that performs a normal Break function. The <tt class="docutils literal"><span class="pre">a</span></tt> node is an alternative (<tt class="docutils literal"><span class="pre">pcAlt</span></tt>) node that matches nil, but stacks a pointer to node x (the <tt class="docutils literal"><span class="pre">pcBreakXX</span></tt> node) which extends the match one character (to eat up the previously detected break character), and then rematches the break.</p>
 <p>The <tt class="docutils literal"><span class="pre">b</span></tt> node is numbered 3, the alternative node is 1, and the <tt class="docutils literal"><span class="pre">x</span></tt> node is 2.</p>
 
 <h1><a class="toc-backref" id="fence" href="#fence">Fence</a></h1><p>Fence builds a single node:<pre>
@@ -2045,7 +2045,7 @@ I 4 I------------&gt;+
 | f |----&gt;
 +---+</pre>
 </p>
-<p>The element <tt class="docutils literal"><span class="pre">f</span></tt>, pcFence, matches <tt class="docutils literal"><span class="pre">nil</span></tt>, and stacks a pointer to a pcAbort element which will abort the match on a subsequent failure.</p>
+<p>The element <tt class="docutils literal"><span class="pre">f</span></tt>, <tt class="docutils literal"><span class="pre">pcFence</span></tt>, matches <tt class="docutils literal"><span class="pre">nil</span></tt>, and stacks a pointer to a <tt class="docutils literal"><span class="pre">pcAbort</span></tt> element which will abort the match on a subsequent failure.</p>
 <p>Since this is a single element it is numbered 1 (the reason we include it in the compound patterns section is that it backtracks).</p>
 
 <h1><a class="toc-backref" id="fence-function" href="#fence-function">Fence Function</a></h1><p>A call to the Fence function builds the structure:<pre>
@@ -2053,8 +2053,8 @@ I 4 I------------&gt;+
 | e |----&gt;| p |----&gt;| x |----&gt;
 +---+     +---+     +---+</pre>
 </p>
-<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the pcREnter node which matches <tt class="docutils literal"><span class="pre">nil</span></tt> and creates two stack entries. The first is a special entry which is not used at all in the fence case (it is present merely for uniformity with other cases of region enter operations).</p>
-<p>The second entry corresponds to a standard new region action. A pcRRemove node is stacked, whose cursor field is used to store the outer stack base, and the stack base is reset to point to this pcRRemove node. Then the pattern <tt class="docutils literal"><span class="pre">p</span></tt> is matched, and it can make history stack entries in the normal manner, so now the stack looks like:<pre>
+<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the <tt class="docutils literal"><span class="pre">pcREnter</span></tt> node which matches <tt class="docutils literal"><span class="pre">nil</span></tt> and creates two stack entries. The first is a special entry which is not used at all in the fence case (it is present merely for uniformity with other cases of region enter operations).</p>
+<p>The second entry corresponds to a standard new region action. A <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> node is stacked, whose cursor field is used to store the outer stack base, and the stack base is reset to point to this <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> node. Then the pattern <tt class="docutils literal"><span class="pre">p</span></tt> is matched, and it can make history stack entries in the normal manner, so now the stack looks like:<pre>
 (stack entries made before fence pattern)
 
 (Special entry, not used at all)
@@ -2064,9 +2064,9 @@ I 4 I------------&gt;+
 
 (stack entries made by matching p)</pre>
 </p>
-<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> fails, then the pcRRemove entry is popped and it removes both itself and the special entry underneath it, restores the outer stack base, and signals failure.</p>
-<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> succeeds, then node <tt class="docutils literal"><span class="pre">x</span></tt>, the pcFenceX node, gets control. One might be tempted to think that at this point, the history stack entries made by matching <tt class="docutils literal"><span class="pre">p</span></tt> can just be removed since they certainly are not going to be used for rematching (that is whole point of Fence after all). However, this is wrong, because it would result in the loss of possible assign-on-match entries for deferred pattern assignments.</p>
-<p>Instead what we do is to make a special entry whose node references pcFenceY, and whose cursor saves the inner stack base value, i.e. the pointer to the pcRRemove entry. Then the outer stack base pointer is restored, so the stack looks like:<pre>
+<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> fails, then the <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> entry is popped and it removes both itself and the special entry underneath it, restores the outer stack base, and signals failure.</p>
+<p>If the match of <tt class="docutils literal"><span class="pre">p</span></tt> succeeds, then node <tt class="docutils literal"><span class="pre">x</span></tt>, the <tt class="docutils literal"><span class="pre">pcFenceX</span></tt> node, gets control. One might be tempted to think that at this point, the history stack entries made by matching <tt class="docutils literal"><span class="pre">p</span></tt> can just be removed since they certainly are not going to be used for rematching (that is whole point of Fence after all). However, this is wrong, because it would result in the loss of possible assign-on-match entries for deferred pattern assignments.</p>
+<p>Instead what we do is to make a special entry whose node references <tt class="docutils literal"><span class="pre">pcFenceY</span></tt>, and whose cursor saves the inner stack base value, i.e. the pointer to the <tt class="docutils literal"><span class="pre">pcRRemove</span></tt> entry. Then the outer stack base pointer is restored, so the stack looks like:<pre>
 (stack entries made before assign pattern)
 
 (Special entry, not used at all)
@@ -2079,7 +2079,7 @@ I 4 I------------&gt;+
 (pcFenceY entry, &quot;cursor&quot; value is stack pointer value referencing the
  pcRRemove entry).</pre>
 </p>
-<p>If a subsequent failure occurs, then the pcFenceY entry removes the entire inner region, including all entries made by matching p, and alternatives prior to the Fence pattern are sought.</p>
+<p>If a subsequent failure occurs, then the <tt class="docutils literal"><span class="pre">pcFenceY</span></tt> entry removes the entire inner region, including all entries made by matching p, and alternatives prior to the Fence pattern are sought.</p>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected. Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in p, the x node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the e node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 
 <h1><a class="toc-backref" id="succeed" href="#succeed">Succeed</a></h1><p>Succeed builds a single node:<pre>
@@ -2087,7 +2087,7 @@ I 4 I------------&gt;+
 | s |----&gt;
 +---+</pre>
 </p>
-<p>The node S is the pcSucceed node which matches nil, and stacks a pointer to itself on the history stack, so that a subsequent failure repeats the same match.</p>
+<p>The node S is the <tt class="docutils literal"><span class="pre">pcSucceed</span></tt> node which matches nil, and stacks a pointer to itself on the history stack, so that a subsequent failure repeats the same match.</p>
 <p>Since this is a single node it is numbered 1 (the reason we include it in the compound patterns section is that it backtracks).</p>
 
 <h1><a class="toc-backref" id="write-immediate" href="#write-immediate">Write Immediate</a></h1><p>The structure built for a write immediate operation (<tt class="docutils literal"><span class="pre">p * F</span></tt>, where <tt class="docutils literal"><span class="pre">F</span></tt> is a file access value) is:<pre>
@@ -2095,7 +2095,7 @@ I 4 I------------&gt;+
 | e |----&gt;| p |----&gt;| w |----&gt;
 +---+     +---+     +---+</pre>
 </p>
-<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the pcREnter node and <tt class="docutils literal"><span class="pre">w</span></tt> is the pcWriteImmP node. The handling is identical to that described above for Assign Immediate, except that at the point where a successful match occurs, the matched substring is written to the referenced file.</p>
+<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the <tt class="docutils literal"><span class="pre">pcREnter</span></tt> node and <tt class="docutils literal"><span class="pre">w</span></tt> is the <tt class="docutils literal"><span class="pre">pcWriteImm</span></tt> node. The handling is identical to that described above for Assign Immediate, except that at the point where a successful match occurs, the matched substring is written to the referenced file.</p>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in p, the <tt class="docutils literal"><span class="pre">w</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the <tt class="docutils literal"><span class="pre">e</span></tt> node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 
 <h1><a class="toc-backref" id="write-on-match" href="#write-on-match">Write On Match</a></h1><p>The structure built for a write on match operation (<tt class="docutils literal"><span class="pre">p ** F</span></tt>, where <tt class="docutils literal"><span class="pre">F</span></tt> is a file access value) is:<pre>
@@ -2103,7 +2103,7 @@ I 4 I------------&gt;+
 | e |----&gt;| p |----&gt;| w |----&gt;
 +---+     +---+     +---+</pre>
 </p>
-<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the pcREnter node and <tt class="docutils literal"><span class="pre">W</span></tt> is the pcWriteOnMP node. The handling is identical to that described above for Assign On Match, except that at the point where a successful match has completed, the matched substring is written to the referenced file.</p>
+<p>Here <tt class="docutils literal"><span class="pre">e</span></tt> is the <tt class="docutils literal"><span class="pre">pcREnter</span></tt> node and <tt class="docutils literal"><span class="pre">W</span></tt> is the <tt class="docutils literal"><span class="pre">pcWriteOnM</span></tt> node. The handling is identical to that described above for Assign On Match, except that at the point where a successful match has completed, the matched substring is written to the referenced file.</p>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in p, the <tt class="docutils literal"><span class="pre">w</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the <tt class="docutils literal"><span class="pre">e</span></tt> node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 </p>
   <div class="section" id="6">
@@ -2212,7 +2212,7 @@ class="link-seesrc" target="_blank">Source</a>
 
 This global variable can be set <tt class="docutils literal"><span class="pre">true</span></tt> to generate debugging on all subsequent calls to match. The debugging output is a full trace of the actions of the pattern matcher, written to <tt class="docutils literal"><span class="pre">stdout</span></tt>. The level of this information is intended to be comprehensible at the abstract level of this package declaration. However, note that the use of this switch often generates large amounts of output.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3707"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3706"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 
@@ -2224,77 +2224,77 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2114"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2113"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="pattern"><a name="pattern,PString"></a><pre><span class="Keyword">proc</span> <span class="Identifier">pattern</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2117"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2116"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="pattern"><a name="pattern,PChar"></a><pre><span class="Keyword">proc</span> <span class="Identifier">pattern</span><span class="Other">(</span><span class="Identifier">c</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2120"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2119"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="&"><a name="&,Pattern,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`&amp;`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Pattern concatenation, matches <tt class="docutils literal"><span class="pre">l</span></tt> followed by <tt class="docutils literal"><span class="pre">r</span></tt>
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2324"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2323"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="&"><a name="&,Pattern,PString"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`&amp;`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2328"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2327"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="&"><a name="&,PString,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`&amp;`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2331"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2330"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="&"><a name="&,Pattern,PChar"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`&amp;`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2334"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2333"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="&"><a name="&,PChar,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`&amp;`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2337"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2336"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="&="><a name="&=,Pattern,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`&amp;=`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Pattern concatenation accumulation, matches <tt class="docutils literal"><span class="pre">l</span></tt> followed by <tt class="docutils literal"><span class="pre">r</span></tt>
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2340"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2339"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="&="><a name="&=,Pattern,PString"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`&amp;=`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2345"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2344"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="&="><a name="&=,Pattern,PChar"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`&amp;=`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2348"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2347"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,Pattern,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
@@ -2308,42 +2308,42 @@ class="link-seesrc" target="_blank">Source</a>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in <tt class="docutils literal"><span class="pre">p</span></tt>, the <tt class="docutils literal"><span class="pre">a</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the e node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2355"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2354"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,PString,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2376"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2375"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,PChar,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">pc</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2382"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2381"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,Pattern,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2388"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2387"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,PString,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2394"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2393"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,PChar,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">pc</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2400"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2399"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,Pattern,ref.File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
@@ -2357,42 +2357,42 @@ class="link-seesrc" target="_blank">Source</a>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in <tt class="docutils literal"><span class="pre">p</span></tt>, the <tt class="docutils literal"><span class="pre">w</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the <tt class="docutils literal"><span class="pre">e</span></tt> node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2406"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2405"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,PString,ref.File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2427"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2426"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,PChar,ref.File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">pc</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2433"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2432"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,Pattern,File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2439"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2438"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,PString,File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2445"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2444"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="*"><a name="*,PChar,File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`*`</span><span class="Other">(</span><span class="Identifier">pc</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2451"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2450"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,Pattern,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
@@ -2406,42 +2406,42 @@ class="link-seesrc" target="_blank">Source</a>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in <tt class="docutils literal"><span class="pre">p</span></tt>, the <tt class="docutils literal"><span class="pre">a</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the <tt class="docutils literal"><span class="pre">e</span></tt> node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2461"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2460"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,PString,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2480"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2479"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,PChar,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">pc</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2486"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2485"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,Pattern,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2492"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2491"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,PString,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2498"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2497"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,PChar,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">pc</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2504"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2503"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,Pattern,ref.File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
@@ -2454,210 +2454,210 @@ class="link-seesrc" target="_blank">Source</a>
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in <tt class="docutils literal"><span class="pre">p</span></tt>, the <tt class="docutils literal"><span class="pre">w</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the <tt class="docutils literal"><span class="pre">e</span></tt> node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2511"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2510"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,PString,ref.File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2526"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2525"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,PChar,ref.File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">pc</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2532"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2531"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,Pattern,File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2538"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2537"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,PString,File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2544"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2543"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="**"><a name="**,PChar,File"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`**`</span><span class="Other">(</span><span class="Identifier">pc</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">file</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">File</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2550"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2549"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="+"><a name="+,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`+`</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Here <tt class="docutils literal"><span class="pre">Str</span></tt> must be a string variable. This function constructs a pattern which at pattern matching time will access the current value of this variable, and match against these characters.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2560"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2559"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="+"><a name="+,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`+`</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Here <tt class="docutils literal"><span class="pre">Str</span></tt> must be a string variable. This function constructs a pattern which at pattern matching time will access the current value of this variable, and match against these characters.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2566"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2565"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="+"><a name="+,StringFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`+`</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">StringFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern which at pattern matching time calls the given function, and then matches against the string or character value that is returned by the call.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2572"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2571"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="+"><a name="+,ref.Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`+`</span><span class="Other">(</span><span class="Identifier">P</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Here <tt class="docutils literal"><span class="pre">P</span></tt> must be a Pattern variable. This function constructs a pattern which at pattern matching time will access the current value of this variable, and match against the pattern value.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2578"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2577"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="+"><a name="+,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`+`</span><span class="Other">(</span><span class="Identifier">P</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Here <tt class="docutils literal"><span class="pre">P</span></tt> must be a Pattern variable. This function constructs a pattern which at pattern matching time will access the current value of this variable, and match against the pattern value.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2584"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2583"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="+"><a name="+,BoolFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`+`</span><span class="Other">(</span><span class="Identifier">P</span><span class="Other">:</span> <span class="Identifier">BoolFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a predicate pattern function that at pattern matching time calls the given function. If true is returned, then the pattern matches.  If false is returned, then failure is signalled.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2590"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2589"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,Pattern,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Creates a pattern that will first try to match <tt class="docutils literal"><span class="pre">l</span></tt> and then on a subsequent failure, attempts to match <tt class="docutils literal"><span class="pre">r</span></tt> instead.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2600"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2599"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,PString,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2605"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2604"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,Pattern,PString"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2608"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2607"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,PString,PString"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2611"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2610"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,PChar,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2614"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2613"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,Pattern,PChar"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2617"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2616"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,PChar,PChar"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2620"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2619"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,PString,PChar"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2623"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2622"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,PChar,PString"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2626"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2625"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or="><a name="or=,Pattern,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">or=</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Creates a pattern that will first try to match <tt class="docutils literal"><span class="pre">l</span></tt> and then on a subsequent failure, attempts to match <tt class="docutils literal"><span class="pre">r</span></tt> instead.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2630"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2629"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,Pattern,PString_2"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2636"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2635"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="or"><a name="or,Pattern,PChar_2"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`or`</span><span class="Other">(</span><span class="Identifier">l</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">r</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2639"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2638"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Any"><a name="Any,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Any</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches a single character that is one of the characters in the given argument. The pattern fails if the current character is not in <tt class="docutils literal"><span class="pre">str</span></tt>.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2646"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2645"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Any"><a name="Any,Character"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Any</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">Character</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2652"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2651"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Any"><a name="Any,CharacterSet"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Any</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">CharacterSet</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2655"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2654"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Any"><a name="Any,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Any</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2658"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2657"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Any"><a name="Any,ptr.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Any</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2661"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2660"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Any"><a name="Any,StringFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Any</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">StringFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2664"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2663"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Arb"><a name="Arb,"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Arb</span><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
@@ -2673,21 +2673,21 @@ Constructs a pattern that will match any string. On the first attempt, the patte
 <p>The pcArbX element is numbered 2, and the pcArbY element is 1</p>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2671"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2670"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Arbno"><a name="Arbno,PString"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Arbno</span><span class="Other">(</span><span class="Identifier">ps</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Pattern repetition. First matches <tt class="docutils literal"><span class="pre">nil</span></tt>, then on a subsequent failure attempts to match an additional instance of the given pattern.  Equivalent to (but more efficient than) <tt class="docutils literal"><span class="pre">P &amp; (&quot;&quot;</span></tt> or <tt class="docutils literal"><span class="pre">(P &amp; (&quot;&quot;</span></tt> or ...
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2695"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2694"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Arbno"><a name="Arbno,PChar"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Arbno</span><span class="Other">(</span><span class="Identifier">pc</span><span class="Other">:</span> <span class="Identifier">PChar</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2704"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2703"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Arbno"><a name="Arbno,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Arbno</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
@@ -2706,126 +2706,126 @@ This is the complex case, either the pattern makes stack entries or it is possib
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected. Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in p, the y node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, the <tt class="docutils literal"><span class="pre">e</span></tt> node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>, and the <tt class="docutils literal"><span class="pre">x</span></tt> node is <tt class="docutils literal"><span class="pre">n + 3</span></tt>.</p>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2707"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2706"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Bal"><a name="Bal,Character,Character"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Bal</span><span class="Other">(</span><span class="Identifier">open</span><span class="Other">,</span> <span class="Identifier">close</span><span class="Other">:</span> <span class="Identifier">Character</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that will match any non-empty string that is balanced with respect to the <tt class="docutils literal"><span class="pre">open</span></tt> and <tt class="docutils literal"><span class="pre">close</span></tt> characters provided.  Attempts to extend the string if a subsequent failure occurs.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2742"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2741"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Bal"><a name="Bal,"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Bal</span><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that will match any non-empty string that is parentheses balanced with respect to the normal parentheses characters. Attempts to extend the string if a subsequent failure occurs.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2748"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2747"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Break"><a name="Break,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Break</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches a (possibly <tt class="docutils literal"><span class="pre">nil</span></tt>) string which is immediately followed by a character in the given argument. This character is not part of the matched string. The pattern fails if the remaining characters to be matched do not include any of the characters in Str.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2758"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2757"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Break"><a name="Break,Character"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Break</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">Character</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2766"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2765"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Break"><a name="Break,CharacterSet"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Break</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">CharacterSet</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2769"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2768"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Break"><a name="Break,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Break</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2772"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2771"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Break"><a name="Break,ptr.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Break</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2775"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2774"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Break"><a name="Break,StringFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Break</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">StringFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2778"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2777"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="BreakX"><a name="BreakX,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">BreakX</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Like Break, but the pattern attempts to extend on a failure to find the next occurrence of a character in <tt class="docutils literal"><span class="pre">Str</span></tt>, and only fails when the last such instance causes a failure.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2785"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2784"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="BreakX"><a name="BreakX,Character"></a><pre><span class="Keyword">proc</span> <span class="Identifier">BreakX</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">Character</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2791"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2790"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="BreakX"><a name="BreakX,CharacterSet"></a><pre><span class="Keyword">proc</span> <span class="Identifier">BreakX</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">CharacterSet</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2794"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2793"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="BreakX"><a name="BreakX,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">BreakX</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2797"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2796"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="BreakX"><a name="BreakX,ptr.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">BreakX</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2800"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2799"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="BreakX"><a name="BreakX,StringFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">BreakX</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">StringFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2803"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2802"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Abort"><a name="Abort,"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Abort</span><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that immediately aborts the entire match
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2810"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2809"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Fail"><a name="Fail,"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Fail</span><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that always fails
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2818"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2817"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Fence"><a name="Fence,"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Fence</span><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches <tt class="docutils literal"><span class="pre">nil</span></tt> on the first attempt, and then causes the entire match to be aborted if a subsequent failure occurs.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2826"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2825"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Fence"><a name="Fence,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Fence</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
@@ -2836,7 +2836,7 @@ Constructs a pattern that first matches <tt class="docutils literal"><span class
 <p>The node numbering of the constituent pattern <tt class="docutils literal"><span class="pre">p</span></tt> is not affected.  Where <tt class="docutils literal"><span class="pre">n</span></tt> is the number of nodes in <tt class="docutils literal"><span class="pre">p</span></tt>, the <tt class="docutils literal"><span class="pre">x</span></tt> node is numbered <tt class="docutils literal"><span class="pre">n + 1</span></tt>, and the <tt class="docutils literal"><span class="pre">e</span></tt> node is <tt class="docutils literal"><span class="pre">n + 2</span></tt>.</p>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2831"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2830"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Len"><a name="Len,Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Len</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
@@ -2845,294 +2845,294 @@ class="link-seesrc" target="_blank">Source</a>
 <p>Note, the following is not just an optimization, it is needed to ensure that Arbno(Len(0)) does not generate an infinite matching loop(since pcLenNat is okForSimpleArbno).</p>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2854"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2853"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Len"><a name="Len,NaturalFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Len</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">NaturalFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2867"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2866"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Len"><a name="Len,ref.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Len</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2870"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2869"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Len"><a name="Len,ptr.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Len</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2873"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2872"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NotAny"><a name="NotAny,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NotAny</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches a single character that is not one of the characters in the given argument. The pattern Fails if the current character is in <tt class="docutils literal"><span class="pre">Str</span></tt>.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2880"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2879"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NotAny"><a name="NotAny,Character"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NotAny</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">Character</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2886"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2885"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NotAny"><a name="NotAny,CharacterSet"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NotAny</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">CharacterSet</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2889"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2888"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NotAny"><a name="NotAny,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NotAny</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2892"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2891"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NotAny"><a name="NotAny,ptr.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NotAny</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2895"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2894"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NotAny"><a name="NotAny,StringFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NotAny</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">StringFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2898"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2897"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NSpan"><a name="NSpan,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NSpan</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches the longest possible string consisting entirely of characters from the given argument. The string may be empty, so this pattern always succeeds.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2904"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2903"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NSpan"><a name="NSpan,Character"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NSpan</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">Character</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2910"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2909"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NSpan"><a name="NSpan,CharacterSet"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NSpan</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">CharacterSet</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2913"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2912"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NSpan"><a name="NSpan,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NSpan</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2916"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2915"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NSpan"><a name="NSpan,ptr.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NSpan</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2919"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2918"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="NSpan"><a name="NSpan,StringFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">NSpan</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">StringFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2922"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2921"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Pos"><a name="Pos,Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Pos</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches the <tt class="docutils literal"><span class="pre">nil</span></tt> string if exactly <tt class="docutils literal"><span class="pre">count</span></tt> characters have already been matched, and otherwise fails.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2929"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2928"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Pos"><a name="Pos,NaturalFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Pos</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">NaturalFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2934"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2933"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Pos"><a name="Pos,ref.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Pos</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2937"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2936"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Pos"><a name="Pos,ptr.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Pos</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2940"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2939"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Rem"><a name="Rem,"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Rem</span><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that always succeeds, matching the remaining unmatched characters in the pattern.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2947"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2946"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Rpos"><a name="Rpos,Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Rpos</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches the <tt class="docutils literal"><span class="pre">nil</span></tt> string if exactly <tt class="docutils literal"><span class="pre">count</span></tt> characters remain to be matched in the string, and otherwise fails.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2956"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2955"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Rpos"><a name="Rpos,NaturalFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Rpos</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">NaturalFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2961"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2960"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Rpos"><a name="Rpos,ref.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Rpos</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2964"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2963"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Rpos"><a name="Rpos,ptr.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Rpos</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2967"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2966"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Rtab"><a name="Rtab,Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Rtab</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches from the current location until exactly count characters remain to be matched in the string. The pattern fails if fewer than count characters remain to be matched.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2974"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2973"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Rtab"><a name="Rtab,NaturalFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Rtab</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">NaturalFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2980"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2979"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Rtab"><a name="Rtab,ref.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Rtab</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2983"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2982"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Rtab"><a name="Rtab,ptr.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Rtab</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2986"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2985"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Setcur"><a name="Setcur,ref.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Setcur</span><span class="Other">(</span><span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches the <tt class="docutils literal"><span class="pre">nil</span></tt> string, and assigns the current cursor position in the string. This value is the number of characters matched so far. So it is zero at the start of the match.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2993"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2992"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Setcur"><a name="Setcur,Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Setcur</span><span class="Other">(</span><span class="Identifier">val</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches the <tt class="docutils literal"><span class="pre">nil</span></tt> string, and assigns the current cursor position in the string. This value is the number of characters matched so far. So it is zero at the start of the match.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2999"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L2998"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Span"><a name="Span,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Span</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that matches the longest possible string consisting entirely of characters from the given argument. The string cannot be empty , so the pattern fails if the current character is not one of the characters in <tt class="docutils literal"><span class="pre">Str</span></tt>.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3009"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3008"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Span"><a name="Span,Character"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Span</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">Character</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3016"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3015"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Span"><a name="Span,CharacterSet"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Span</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">CharacterSet</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3019"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3018"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Span"><a name="Span,ref.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Span</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3022"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3021"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Span"><a name="Span,ptr.String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Span</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3025"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3024"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Span"><a name="Span,StringFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Span</span><span class="Other">(</span><span class="Identifier">str</span><span class="Other">:</span> <span class="Identifier">StringFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3028"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3027"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Succeed"><a name="Succeed,"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Succeed</span><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that succeeds matching nil, both on the first attempt, and on any rematch attempt, i.e. it is equivalent to an infinite alternation of <tt class="docutils literal"><span class="pre">nil</span></tt> strings.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3035"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3034"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Tab"><a name="Tab,Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Tab</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Constructs a pattern that from the current location until <tt class="docutils literal"><span class="pre">count</span></tt> characters have been matched. The pattern fails if more than <tt class="docutils literal"><span class="pre">count</span></tt> characters have already been matched.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3045"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3044"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Tab"><a name="Tab,NaturalFunc"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Tab</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Identifier">NaturalFunc</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3051"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3050"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Tab"><a name="Tab,ref.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Tab</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ref</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3054"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3053"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="Tab"><a name="Tab,ptr.Natural"></a><pre><span class="Keyword">proc</span> <span class="Identifier">Tab</span><span class="Other">(</span><span class="Identifier">count</span><span class="Other">:</span> <span class="Keyword">ptr</span> <span class="Identifier">Natural</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Pattern</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3057"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3056"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="$"><a name="$,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">`$`</span><span class="Other">(</span><span class="Identifier">p</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">RootEffect</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
@@ -3143,7 +3143,7 @@ This functions yield strings that corresponds to the syntax needed to create the
 <p>where 16#...# is the hex representation of the integer address that corresponds to the given access value</p>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3477"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3476"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="dump"><a name="dump,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">dump</span><span class="Other">(</span><span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span>
@@ -3151,7 +3151,7 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 This function writes information about the pattern to <tt class="docutils literal"><span class="pre">stdout</span></tt>. The format of this information is keyed to the internal data structures used to implement patterns. The information provided by dump is thus more precise than that yielded by Image, but is also a bit more obscure (i.e. it cannot be interpreted solely in terms of this spec, you have to know something about the data structures).
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3499"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L3498"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,Pattern"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
@@ -3159,14 +3159,14 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 The subject is matched against the pattern.  Any immediate or deferred assignments or writes are executed, and the returned value indicates whether or not the match succeeded.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L4975"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L4974"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,PString"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L4985"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L4984"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,Pattern,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
@@ -3174,7 +3174,7 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 The <tt class="docutils literal"><span class="pre">subject</span></tt> is matched against the pattern.  Any immediate or deferred assignments or writes are executed, and the returned value indicates whether or not the match succeeded.  If the match succeeds, then the matched part of the <tt class="docutils literal"><span class="pre">subject</span></tt> string is replaced by the given <tt class="docutils literal"><span class="pre">replace</span></tt> string.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5003"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5002"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,PString,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
@@ -3182,7 +3182,7 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5017"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5016"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,PString,String_2"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">PString</span><span class="Other">;</span> <span class="Identifier">replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span> <span class="Other">{.</span>
@@ -3190,7 +3190,7 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5026"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5025"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="match"><a name="match,String,Pattern,MatchResult"></a><pre><span class="Keyword">proc</span> <span class="Identifier">match</span><span class="Other">(</span><span class="Identifier">subject</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">String</span><span class="Other">;</span> <span class="Identifier">pat</span><span class="Other">:</span> <span class="Identifier">Pattern</span><span class="Other">;</span> <span class="Identifier">res</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">MatchResult</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">{.</span>
@@ -3198,14 +3198,14 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5039"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5038"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 <dt id="replace"><a name="replace,MatchResult,String"></a><pre><span class="Keyword">proc</span> <span class="Identifier">replace</span><span class="Other">(</span><span class="Identifier">result</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">MatchResult</span><span class="Other">;</span> <span class="Identifier">replace</span><span class="Other">:</span> <span class="Identifier">String</span><span class="Other">)</span> <span class="Other">{.</span><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">.}</span></pre></dt>
 <dd>
 Given a previous call to match which set result, performs a pattern replacement if the match was successful. Has no effect if the match failed. This call should immediately follow the match call.
 &nbsp;&nbsp;<a
-href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5055"
+href="https://github.com/Henry/Nimbol/blob/master/nimbol.nim#L5054"
 class="link-seesrc" target="_blank">Source</a>
 </dd>
 
@@ -3218,7 +3218,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-09-13 14:12:51 UTC</small>
+        <small>Made with Nim. Generated: 2015-09-13 16:03:03 UTC</small>
       </div>
     </div>
   </div>
